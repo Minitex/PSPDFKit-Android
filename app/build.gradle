@@ -7,7 +7,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "org.nypl.pspdfkit_android_example"
+        applicationId "org.nypl.pspdfkitandroidexample"
         minSdkVersion 19
         targetSdkVersion 26
         versionCode 1

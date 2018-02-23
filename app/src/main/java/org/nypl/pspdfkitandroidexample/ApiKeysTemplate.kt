@@ -1,4 +1,4 @@
-package org.nypl.pspdfkit_android_example
+package org.nypl.pspdfkitandroidexample
 
 /**
  * Created by Matt on 1/19/2018.

@@ -1,4 +1,4 @@
-package org.nypl.pspdfkit_android_example
+package org.nypl.pspdfkitandroidexample
 
 import org.junit.Test
 

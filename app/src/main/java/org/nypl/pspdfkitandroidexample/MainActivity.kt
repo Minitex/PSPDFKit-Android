@@ -1,4 +1,4 @@
-package org.nypl.pspdfkit_android_example
+package org.nypl.pspdfkitandroidexample
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle

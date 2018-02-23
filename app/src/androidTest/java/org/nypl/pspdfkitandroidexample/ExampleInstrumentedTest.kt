@@ -1,4 +1,4 @@
-package org.nypl.pspdfkit_android_example
+package org.nypl.pspdfkitandroidexample
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getTargetContext()
-        assertEquals("org.nypl.pspdfkit_android_example", appContext.packageName)
+        assertEquals("org.nypl.pspdfkitandroidexample", appContext.packageName)
     }
 }

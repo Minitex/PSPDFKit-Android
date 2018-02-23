@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.nypl.pspdfkit_android_example.MainActivity">
+    tools:context="org.nypl.pspdfkitandroidexample.MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
