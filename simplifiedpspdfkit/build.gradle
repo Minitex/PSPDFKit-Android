@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 26
@@ -48,4 +49,5 @@ dependencies {
     //compile 'com.pspdfkit:pspdfkit:4.2.0'
     // when we have a real maven key, we'll need to compile the above instead of demo (I'm guessing)
     compile 'com.pspdfkit:pspdfkit-demo:4.2.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
