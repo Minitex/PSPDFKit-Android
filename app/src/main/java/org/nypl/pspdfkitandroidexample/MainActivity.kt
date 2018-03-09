@@ -28,12 +28,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-
     }
 
     private fun getBooks() {
         var emptySet: Set<Int> = emptySet()
-        var book1 = Book("Financial Accounting", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
+        var book1 = Book("Financial Accounting", kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
         var book2 = Book("Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)

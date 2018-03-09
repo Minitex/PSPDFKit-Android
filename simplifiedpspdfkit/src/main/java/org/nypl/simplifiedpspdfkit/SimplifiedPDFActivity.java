@@ -51,7 +51,7 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         super.onCreate(savedInstanceState, persistentState);
     }
 
-    public static Intent BuildIntent(Uri assetFile, int openToPage, int[] bookmarks, String pspdfkitLicenseKey, Context context, OnBookmarksChangedListener bookmarkListener, OnPageChangedListener pageChangedListener) {
+    public static Intent BuildIntent(Uri assetFile, int openToPage, int[] bookmarks, String pspdfkitLicenseKey, Context context, OnPageChangedListener pageChangedListener, OnBookmarksChangedListener bookmarkListener) {
         // Set license key
         try {
             PSPDFKit.initialize(context, pspdfkitLicenseKey);
@@ -110,7 +110,9 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         super.onPageChanged(document, pageIndex);
         setBookmarkIcon(pageIndex);
         // pageIndex here is 0 based and used works for setting bookmark, but not last page read
-        onPageChangedListener.onEvent(pageIndex + 1);
+        if (onPageChangedListener != null) {
+            onPageChangedListener.onEvent(pageIndex + 1);
+        }
     }
 
     @Override
@@ -120,7 +122,9 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         if (item.getItemId() == R.id.bookmark_item) {
             handled = true;
             toggleBookmark(getPageIndex());
-            onBookmarksChangedListener.onEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
+            if (onBookmarksChangedListener != null) {
+                onBookmarksChangedListener.onEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
+            }
         }
 
         return handled || super.onOptionsItemSelected(item);

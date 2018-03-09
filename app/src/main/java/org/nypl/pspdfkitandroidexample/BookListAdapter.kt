@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
+import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
+import org.nypl.simplifiedpspdfkit.OnPageChangedListener
 import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 
 /**
@@ -27,7 +29,17 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
     override fun getItemCount() = books.size
 
-    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
+    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, OnBookmarksChangedListener, OnPageChangedListener {
+        override fun onEvent(pageIndex: Int) {
+            book?.lastPageRead = pageIndex
+            updateView()
+        }
+
+        override fun onEvent(newBookmarks: IntArray) {
+            book?.bookmarks = newBookmarks.toSet()
+            updateView()
+        }
+
         private var view: View = v
         private var book: Book? = null
 
@@ -38,22 +50,28 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         override fun onClick(p0: View) {
             val context = itemView.context
             if (book != null) {
-                Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show()
                 startPdfActivity(context, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks.toIntArray())
             } else {
-                Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show()
             }
         }
 
         fun bindBook(book: Book) {
             this.book = book
-            view.bookTitle.text = book.title
-            view.lastPageRead.text = "Last Page Read: " + book.lastPageRead.toString()
-            view.bookmarkCount.text = "Bookmarks Saved: " + book.bookmarks.size.toString()
+            updateView()
+        }
+
+        private fun updateView(){
+            view.bookTitle.text = book?.title
+            view.lastPageRead.text = "Last Page Read: " + book?.lastPageRead.toString()
+            view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
         }
 
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: IntArray) {
-            val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, null)
+            val rendererProvider = PDFRendererProvider()
+            val intent = rendererProvider.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
+            //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
             context.startActivity(intent)
         }
     }
