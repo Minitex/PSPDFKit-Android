@@ -1,15 +1,22 @@
 package org.nypl.pspdfkitandroidexample
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.support.v4.content.ContextCompat.startActivity
 import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
+import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
+import org.nypl.simplifiedpspdfkit.OnPageChangedListener
+import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 
 /**
  * Created by nieho003 on 2/23/2018.
  */
-class BookListAdapter (private val books : ArrayList<Book>) : RecyclerView.Adapter<BookListAdapter.BookHolder>() {
+class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter<BookListAdapter.BookHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookListAdapter.BookHolder {
         val inflatedView = parent.inflate(R.layout.book_list_item_row, false)
         return BookHolder(inflatedView)
@@ -22,7 +29,17 @@ class BookListAdapter (private val books : ArrayList<Book>) : RecyclerView.Adapt
 
     override fun getItemCount() = books.size
 
-    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
+    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, OnBookmarksChangedListener, OnPageChangedListener {
+        override fun onEvent(pageIndex: Int) {
+            book?.lastPageRead = pageIndex
+            updateView()
+        }
+
+        override fun onEvent(newBookmarks: IntArray) {
+            book?.bookmarks = newBookmarks.toSet()
+            updateView()
+        }
+
         private var view: View = v
         private var book: Book? = null
 
@@ -32,13 +49,30 @@ class BookListAdapter (private val books : ArrayList<Book>) : RecyclerView.Adapt
 
         override fun onClick(p0: View) {
             val context = itemView.context
-            Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show();
+            if (book != null) {
+                Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show()
+                startPdfActivity(context, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks.toIntArray())
+            } else {
+                Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show()
+            }
         }
 
         fun bindBook(book: Book) {
-            view.bookTitle.text = book.title
-            view.lastPageRead.text = "Last Page Read: " + book.lastPageRead.toString()
-            view.bookmarkCount.text = "Bookmarks Saved: " + book.bookmarks.size.toString()
+            this.book = book
+            updateView()
+        }
+
+        private fun updateView(){
+            view.bookTitle.text = book?.title
+            view.lastPageRead.text = "Last Page Read: " + book?.lastPageRead.toString()
+            view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
+        }
+
+        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: IntArray) {
+            val rendererProvider = PDFRendererProvider()
+            val intent = rendererProvider.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
+            //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
+            context.startActivity(intent)
         }
     }
 }
