@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         layoutManager = LinearLayoutManager(this)
         rv_book_list.layoutManager = layoutManager
 
-        getBooks()
+        populateBooks()
 
         adapter = BookListAdapter(booksList)
         rv_book_list.adapter = adapter
@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
     }
 
-    private fun getBooks() {
+    private fun populateBooks() {
         var emptySet: Set<Int> = emptySet()
         var book1 = Book("Financial Accounting", kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
