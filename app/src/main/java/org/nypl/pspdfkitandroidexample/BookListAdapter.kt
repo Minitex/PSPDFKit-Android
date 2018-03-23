@@ -17,6 +17,7 @@ import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
  * Created by nieho003 on 2/23/2018.
  */
 class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter<BookListAdapter.BookHolder>() {
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookListAdapter.BookHolder {
         val inflatedView = parent.inflate(R.layout.book_list_item_row, false)
         return BookHolder(inflatedView)
@@ -30,13 +31,17 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
     override fun getItemCount() = books.size
 
     class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, OnBookmarksChangedListener, OnPageChangedListener {
+
+        var rendererProvider : PDFRendererProvider = PDFRendererProvider()
+
+
         override fun onEvent(pageIndex: Int) {
             book?.lastPageRead = pageIndex
             updateView()
         }
 
         override fun onEvent(newBookmarks: IntArray) {
-            book?.bookmarks = newBookmarks.toSet()
+            book?.bookmarks = rendererProvider.intArrayToPdfBookmarkSet(newBookmarks)
             updateView()
         }
 
@@ -51,7 +56,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             val context = itemView.context
             if (book != null) {
                 Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show()
-                startPdfActivity(context, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks.toIntArray())
+                startPdfActivity(context, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks)
             } else {
                 Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show()
             }
@@ -68,9 +73,8 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
         }
 
-        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: IntArray) {
-            val rendererProvider = PDFRendererProvider()
-            val intent = rendererProvider.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
+        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>) {
+            val intent = rendererProvider.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
             //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
             context.startActivity(intent)
         }
