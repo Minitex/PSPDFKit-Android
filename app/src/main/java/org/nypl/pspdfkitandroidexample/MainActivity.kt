@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun populateBooks() {
-        var emptySet: Set<Int> = emptySet()
         var book1 = Book("Financial Accounting", kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
         var book2 = Book("Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
