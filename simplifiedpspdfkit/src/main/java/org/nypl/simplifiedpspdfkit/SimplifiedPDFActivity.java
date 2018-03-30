@@ -20,13 +20,16 @@ import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
 import com.pspdfkit.ui.PdfActivity;
 import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 /**
  * Created by Matt on 3/2/2018.
  */
 
-public final class SimplifiedPDFActivity extends PdfActivity {
+//Here we implement the interface of the PDFRendererProvider "module"
+public final class SimplifiedPDFActivity extends PdfActivity implements PDFRendererProvider {
 
     public SimplifiedPDFActivity() {
     }
@@ -51,19 +54,30 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         super.onCreate(savedInstanceState, persistentState);
     }
 
-    public static Intent BuildIntent(Uri assetFile, int openToPage, int[] bookmarks, String pspdfkitLicenseKey, Context context, OnPageChangedListener pageChangedListener, OnBookmarksChangedListener bookmarkListener) {
-        // Set license key
+    //from the interface:
+
+    private List<PDFRendererBookmark> bookmarks;
+    private PDFRendererPage currentPage;
+
+    @NotNull
+    @Override
+    public Intent buildPDFRendererIntent(@NotNull Uri assetFile, @NotNull PDFRendererPage openToPage, @NotNull List<? extends PDFRendererBookmark> bookmarks, @NotNull List<? extends PDFRendererAnnotation> annotations, @NotNull Context context) {
+
+        // Setting the key should be done in this module since it's the only one that "knows" about pspdfkit
+        final String key = "123";
         try {
-            PSPDFKit.initialize(context, pspdfkitLicenseKey);
+            PSPDFKit.initialize(context, key);
         } catch (PSPDFKitInitializationFailedException e) {
             Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
         }
 
-        // Set listeners
-        onBookmarksChangedListener = bookmarkListener;
-        onPageChangedListener = pageChangedListener;
+        //set bookmarks ivar in this listener
+        onBookmarksChangedListener = bookmarkChanged();
+        //set currentPage ivar in this listener
+        onPageChangedListener = pageChanged();
 
-        bookmarksToCreate = bookmarks;
+        //convert from interface generic to special flavor bookmark
+        bookmarksToCreate = serializeToPSPDFBookmarks(bookmarks);
 
         // Set configuration
         PdfActivityConfiguration config = new PdfActivityConfiguration
@@ -74,9 +88,9 @@ public final class SimplifiedPDFActivity extends PdfActivity {
                 .disableShare()
                 .disablePrinting()
                 .disableFormEditing()
-                .page(openToPage - 1)
+                //note how i used this
+                .page(openToPage.getCurrentPageNumber() - 1)
                 .build();
-
 
         return PdfActivityIntentBuilder.fromUri(context, assetFile)
                 .configuration(config)

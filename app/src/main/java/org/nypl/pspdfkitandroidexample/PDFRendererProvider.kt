@@ -3,10 +3,8 @@ package org.nypl.pspdfkitandroidexample
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.pspdfkit.bookmarks.Bookmark
 import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
 import org.nypl.simplifiedpspdfkit.OnPageChangedListener
-import org.nypl.simplifiedpspdfkit.PSPDFKitRenderer
 import org.nypl.simplifiedpspdfkit.RendererProviderInterface
 
 class PDFRendererProvider {
