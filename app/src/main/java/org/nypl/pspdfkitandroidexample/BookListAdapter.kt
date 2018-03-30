@@ -11,6 +11,7 @@ import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
 import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
 import org.nypl.simplifiedpspdfkit.OnPageChangedListener
+import org.nypl.simplifiedpspdfkit.PDFRenderer
 import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 
 /**
@@ -74,9 +75,9 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         }
 
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>) {
-            val intent = rendererProvider.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
-            //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
-            context.startActivity(intent)
+            //Now we can instantiate this from the host without "knowing" anything about pspdfkit..
+            val intent = PDFRenderer().renderer.buildPDFRendererIntent(assetFile, etc, etc, etc,)
+            context.startActivities(intent)
         }
     }
 }
