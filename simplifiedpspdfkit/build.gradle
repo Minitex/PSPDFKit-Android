@@ -45,6 +45,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    compile project(':pdfrendererprovider')
+
 
     //compile 'com.pspdfkit:pspdfkit:4.2.0'
     // when we have a real maven key, we'll need to compile the above instead of demo (I'm guessing)

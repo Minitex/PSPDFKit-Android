@@ -8,8 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
 import org.nypl.pdfrendererprovider.PDFRenderer
-import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
-import org.nypl.simplifiedpspdfkit.OnPageChangedListener
+import org.nypl.pdfrendererprovider.PDFRendererListener
 
 /**
  * Created by nieho003 on 2/23/2018.
@@ -28,14 +27,19 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
     override fun getItemCount() = books.size
 
-    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, OnBookmarksChangedListener, OnPageChangedListener {
+    // 1. todo: move these listeners to the pdfrenderer provider
+// 2. create new interface in rendererprovider module that replace current OnBookmarks.. OnPageChanged...
+    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, PDFRendererListener {
 
         var rendererProvider : PDFRendererProvider = PDFRendererProvider()
+        var pdfRenderer:PDFRenderer = PDFRenderer()
 
-
+        //
         override fun onPageChangedEvent(pageIndex: Int) {
             book?.lastPageRead = pageIndex
             updateView()
+
+
         }
 
         override fun onBookmarkEvent(newBookmarks: IntArray) {
@@ -74,7 +78,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>) {
             //val intent = rendererProvider.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
             //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
-            val intent = PDFRenderer().renderer.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context)
+            val intent = pdfRenderer.renderer.buildIntent(assetFile, lastRead, bookmarks, context, this)
             context.startActivity(intent)
         }
     }

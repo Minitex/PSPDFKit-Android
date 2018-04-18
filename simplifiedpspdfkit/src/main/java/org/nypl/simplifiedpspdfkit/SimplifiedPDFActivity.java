@@ -1,4 +1,4 @@
-package org.nypl.pdfrendererprovider;
+package org.nypl.simplifiedpspdfkit;
 
 import android.content.Context;
 import android.content.Intent;
@@ -21,10 +21,11 @@ import com.pspdfkit.ui.PdfActivity;
 import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
 import org.jetbrains.annotations.NotNull;
-import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener;
-import org.nypl.simplifiedpspdfkit.OnPageChangedListener;
+import org.nypl.pdfrendererprovider.PDFRendererBookmark;
+import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Matt on 3/2/2018.
@@ -53,39 +54,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-    }
-
-    public static Intent BuildIntent(Uri assetFile, int openToPage, int[] bookmarks, String pspdfkitLicenseKey, Context context, OnPageChangedListener pageChangedListener, OnBookmarksChangedListener bookmarkListener) {
-        // Set license key
-        try {
-            PSPDFKit.initialize(context, pspdfkitLicenseKey);
-        } catch (PSPDFKitInitializationFailedException e) {
-            Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
-        }
-
-        // Set listeners
-        onBookmarksChangedListener = bookmarkListener;
-        onPageChangedListener = pageChangedListener;
-
-        bookmarksToCreate = bookmarks;
-
-        // Set configuration
-        PdfActivityConfiguration config = new PdfActivityConfiguration
-                .Builder(context)
-                .disableDocumentEditor()
-                .disableAnnotationEditing()
-                .disableAnnotationList()
-                .disableShare()
-                .disablePrinting()
-                .disableFormEditing()
-                .page(openToPage - 1)
-                .build();
-
-
-        return PdfActivityIntentBuilder.fromUri(context, assetFile)
-                .configuration(config)
-                .activityClass(SimplifiedPDFActivity.class)
-                .build();
     }
 
     @Override
@@ -223,10 +191,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
 
     @NotNull
     @Override
-    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull int[] bookmarks, @NotNull String pspdfKitLicenseKey, @NotNull Context context) {
+    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull int[] bookmarks, @NotNull Context context, OnPageChangedListener pageChangedListener) {
         // Set license key
         try {
-            PSPDFKit.initialize(context, pspdfKitLicenseKey);
+            PSPDFKit.initialize(context, ApiKeys.PSPDFKitLicenseKey);
         } catch (PSPDFKitInitializationFailedException e) {
             Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
         }
@@ -254,5 +222,17 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
                 .configuration(config)
                 .activityClass(SimplifiedPDFActivity.class)
                 .build();
+    }
+
+
+    @Override
+    public void setCurrentBookmarks(@NotNull List<? extends PDFRendererBookmark> list) {
+
+    }
+
+    @NotNull
+    @Override
+    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<? extends PDFRendererBookmark> bookmarks, @NotNull Context context) {
+        return null;
     }
 }
