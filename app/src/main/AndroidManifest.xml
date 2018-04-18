@@ -20,7 +20,7 @@
             android:name="com.pspdfkit.ui.PdfActivity"
             android:windowSoftInputMode="adjustNothing" />
         <activity
-            android:name="org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity"
+            android:name="org.nypl.pdfrendererprovider.SimplifiedPDFActivity"
             android:windowSoftInputMode="adjustNothing" />
     </application>
 

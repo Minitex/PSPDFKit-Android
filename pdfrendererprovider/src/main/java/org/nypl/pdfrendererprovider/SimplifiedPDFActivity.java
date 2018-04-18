@@ -1,4 +1,4 @@
-package org.nypl.simplifiedpspdfkit;
+package org.nypl.pdfrendererprovider;
 
 import android.content.Context;
 import android.content.Intent;
@@ -20,13 +20,17 @@ import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
 import com.pspdfkit.ui.PdfActivity;
 import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
+import org.jetbrains.annotations.NotNull;
+import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener;
+import org.nypl.simplifiedpspdfkit.OnPageChangedListener;
+
 import java.util.List;
 
 /**
  * Created by Matt on 3/2/2018.
  */
 
-public final class SimplifiedPDFActivity extends PdfActivity {
+public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererProviderInterface {
 
     public SimplifiedPDFActivity() {
     }
@@ -41,7 +45,7 @@ public final class SimplifiedPDFActivity extends PdfActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.bookmark_menu, menu);
+        getMenuInflater().inflate(org.nypl.simplifiedpspdfkit.R.menu.bookmark_menu, menu);
         this.menu = menu;
         return true;
     }
@@ -111,7 +115,7 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         setBookmarkIcon(pageIndex);
         // pageIndex here is 0 based and used works for setting bookmark, but not last page read
         if (onPageChangedListener != null) {
-            onPageChangedListener.onEvent(pageIndex + 1);
+            onPageChangedListener.onPageChangedEvent(pageIndex + 1);
         }
     }
 
@@ -119,16 +123,18 @@ public final class SimplifiedPDFActivity extends PdfActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         boolean handled = false;
 
-        if (item.getItemId() == R.id.bookmark_item) {
+        if (item.getItemId() == org.nypl.simplifiedpspdfkit.R.id.bookmark_item) {
             handled = true;
             toggleBookmark(getPageIndex());
             if (onBookmarksChangedListener != null) {
-                onBookmarksChangedListener.onEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
+                onBookmarksChangedListener.onBookmarkEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
             }
         }
 
         return handled || super.onOptionsItemSelected(item);
     }
+
+
 
     private boolean containsBookmarkForPage(List<Bookmark> bookmarks, int page) {
         for (Bookmark bookmark : bookmarks) {
@@ -157,11 +163,11 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         }
 
         List<Bookmark> currentBookmarks = this.bookmarkProvider.getBookmarks();
-        MenuItem menuItem = menu.findItem(R.id.bookmark_item);
+        MenuItem menuItem = menu.findItem(org.nypl.simplifiedpspdfkit.R.id.bookmark_item);
         if (containsBookmarkForPage(currentBookmarks, pageIndex)) {
-            menuItem.setIcon(R.drawable.ic_bookmark);
+            menuItem.setIcon(org.nypl.simplifiedpspdfkit.R.drawable.ic_bookmark);
         } else {
-            menuItem.setIcon(R.drawable.ic_bookmark_outline);
+            menuItem.setIcon(org.nypl.simplifiedpspdfkit.R.drawable.ic_bookmark_outline);
         }
     }
 
@@ -192,5 +198,61 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         }
 
         return bookmarkArray;
+    }
+
+    @Override
+    public int getCurrentPage() {
+        return 0;
+    }
+
+    @Override
+    public void setCurrentPage(int i) {
+
+    }
+
+    @NotNull
+    @Override
+    public List<PDFRendererBookmark> getCurrentBookmarks() {
+        return null;
+    }
+
+    @Override
+    public void setCurrentBookmarks(@NotNull List<? extends PDFRendererBookmark> list) {
+
+    }
+
+    @NotNull
+    @Override
+    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull int[] bookmarks, @NotNull String pspdfKitLicenseKey, @NotNull Context context) {
+        // Set license key
+        try {
+            PSPDFKit.initialize(context, pspdfKitLicenseKey);
+        } catch (PSPDFKitInitializationFailedException e) {
+            Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
+        }
+
+        // Set listeners
+        onBookmarksChangedListener = bookmarkListener;
+        onPageChangedListener = pageChangedListener;
+
+        bookmarksToCreate = bookmarks;
+
+        // Set configuration
+        PdfActivityConfiguration config = new PdfActivityConfiguration
+                .Builder(context)
+                .disableDocumentEditor()
+                .disableAnnotationEditing()
+                .disableAnnotationList()
+                .disableShare()
+                .disablePrinting()
+                .disableFormEditing()
+                .page(openToPage - 1)
+                .build();
+
+
+        return PdfActivityIntentBuilder.fromUri(context, assetFile)
+                .configuration(config)
+                .activityClass(SimplifiedPDFActivity.class)
+                .build();
     }
 }

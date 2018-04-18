@@ -5,5 +5,5 @@ package org.nypl.simplifiedpspdfkit
  */
 
 interface OnPageChangedListener {
-    fun onEvent(pageIndex: Int)
+    fun onPageChangedEvent(pageIndex: Int)
 }

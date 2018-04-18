@@ -1,17 +1,15 @@
 package org.nypl.pspdfkitandroidexample
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.support.v4.content.ContextCompat.startActivity
 import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
+import org.nypl.pdfrendererprovider.PDFRenderer
 import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
 import org.nypl.simplifiedpspdfkit.OnPageChangedListener
-import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 
 /**
  * Created by nieho003 on 2/23/2018.
@@ -35,12 +33,12 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         var rendererProvider : PDFRendererProvider = PDFRendererProvider()
 
 
-        override fun onEvent(pageIndex: Int) {
+        override fun onPageChangedEvent(pageIndex: Int) {
             book?.lastPageRead = pageIndex
             updateView()
         }
 
-        override fun onEvent(newBookmarks: IntArray) {
+        override fun onBookmarkEvent(newBookmarks: IntArray) {
             book?.bookmarks = rendererProvider.intArrayToPdfBookmarkSet(newBookmarks)
             updateView()
         }
@@ -74,8 +72,9 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         }
 
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>) {
-            val intent = rendererProvider.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
+            //val intent = rendererProvider.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, this,  this)
             //val intent = SimplifiedPDFActivity.BuildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context, null, this)
+            val intent = PDFRenderer().renderer.buildIntent(assetFile, lastRead, bookmarks, ApiKeys.PSPDFKitLicenseKey, context)
             context.startActivity(intent)
         }
     }
