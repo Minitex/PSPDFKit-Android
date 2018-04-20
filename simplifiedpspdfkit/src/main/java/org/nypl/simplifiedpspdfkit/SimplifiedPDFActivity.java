@@ -17,11 +17,14 @@ import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration;
 import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
+import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
 import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
 import org.jetbrains.annotations.NotNull;
-import org.nypl.pdfrendererprovider.PDFRendererBookmark;
+import org.nypl.pdfrendererprovider.PDFAnnotation;
+import org.nypl.pdfrendererprovider.PDFPage;
+import org.nypl.pdfrendererprovider.PDFRendererListener;
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
 
 import java.util.List;
@@ -31,7 +34,7 @@ import java.util.Set;
  * Created by Matt on 3/2/2018.
  */
 
-public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererProviderInterface {
+public class SimplifiedPDFActivity extends PdfActivity implements DocumentListener, PDFRendererProviderInterface {
 
     public SimplifiedPDFActivity() {
     }
@@ -40,8 +43,8 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
     private Menu menu;
     private PdfDocument document;
     private BookmarkProvider bookmarkProvider;
-    private static OnBookmarksChangedListener onBookmarksChangedListener;
-    private static OnPageChangedListener onPageChangedListener;
+
+    private PDFRendererListener delegateListener;
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -82,8 +85,9 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
         super.onPageChanged(document, pageIndex);
         setBookmarkIcon(pageIndex);
         // pageIndex here is 0 based and used works for setting bookmark, but not last page read
-        if (onPageChangedListener != null) {
-            onPageChangedListener.onPageChangedEvent(pageIndex + 1);
+        if (this.delegateListener != null) {
+            this.delegateListener.onPageChanged();
+//            onPageChangedListener.onPageChangedEvent(pageIndex + 1);
         }
     }
 
@@ -94,8 +98,9 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
         if (item.getItemId() == org.nypl.simplifiedpspdfkit.R.id.bookmark_item) {
             handled = true;
             toggleBookmark(getPageIndex());
-            if (onBookmarksChangedListener != null) {
-                onBookmarksChangedListener.onBookmarkEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
+            if (this.delegateListener != null) {
+                this.delegateListener.onBookmarkChanged();
+//                onBookmarksChangedListener.onBookmarkEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
             }
         }
 
@@ -168,30 +173,9 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
         return bookmarkArray;
     }
 
-    @Override
-    public int getCurrentPage() {
-        return 0;
-    }
-
-    @Override
-    public void setCurrentPage(int i) {
-
-    }
-
     @NotNull
     @Override
-    public List<PDFRendererBookmark> getCurrentBookmarks() {
-        return null;
-    }
-
-    @Override
-    public void setCurrentBookmarks(@NotNull List<? extends PDFRendererBookmark> list) {
-
-    }
-
-    @NotNull
-    @Override
-    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull int[] bookmarks, @NotNull Context context, OnPageChangedListener pageChangedListener) {
+    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFPage> bookmarks, @NotNull Context context, @NotNull PDFRendererListener listener) {
         // Set license key
         try {
             PSPDFKit.initialize(context, ApiKeys.PSPDFKitLicenseKey);
@@ -199,11 +183,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
             Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
         }
 
-        // Set listeners
-        onBookmarksChangedListener = bookmarkListener;
-        onPageChangedListener = pageChangedListener;
-
-        bookmarksToCreate = bookmarks;
+        this.delegateListener = listener;
 
         // Set configuration
         PdfActivityConfiguration config = new PdfActivityConfiguration
@@ -214,7 +194,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
                 .disableShare()
                 .disablePrinting()
                 .disableFormEditing()
-                .page(openToPage - 1)
+                .page(lastRead - 1)
                 .build();
 
 
@@ -224,15 +204,37 @@ public class SimplifiedPDFActivity extends PdfActivity implements PDFRendererPro
                 .build();
     }
 
+    @NotNull
+    @Override
+    public PDFPage getCurrentPage() {
+        return null;
+    }
 
     @Override
-    public void setCurrentBookmarks(@NotNull List<? extends PDFRendererBookmark> list) {
+    public void setCurrentPage(@NotNull PDFPage pdfPage) {
 
     }
 
     @NotNull
     @Override
-    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<? extends PDFRendererBookmark> bookmarks, @NotNull Context context) {
+    public List<PDFPage> getCurrentBookmarks() {
         return null;
     }
+
+    @Override
+    public void setCurrentBookmarks(@NotNull List<PDFPage> list) {
+
+    }
+
+    @NotNull
+    @Override
+    public List<PDFAnnotation> getNotes() {
+        return null;
+    }
+
+    @Override
+    public void setNotes(@NotNull List<PDFAnnotation> list) {
+
+    }
+
 }
