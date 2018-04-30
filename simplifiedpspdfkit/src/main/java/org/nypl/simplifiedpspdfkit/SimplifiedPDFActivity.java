@@ -23,10 +23,11 @@ import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
 import org.jetbrains.annotations.NotNull;
 import org.nypl.pdfrendererprovider.PDFAnnotation;
-import org.nypl.pdfrendererprovider.PDFPage;
+import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFRendererListener;
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -86,7 +87,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         setBookmarkIcon(pageIndex);
         // pageIndex here is 0 based and used works for setting bookmark, but not last page read
         if (this.delegateListener != null) {
-            this.delegateListener.onPageChanged();
+            this.delegateListener.onPageChanged(pageIndex + 1);
 //            onPageChangedListener.onPageChangedEvent(pageIndex + 1);
         }
     }
@@ -99,7 +100,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             handled = true;
             toggleBookmark(getPageIndex());
             if (this.delegateListener != null) {
-                this.delegateListener.onBookmarkChanged();
+                this.delegateListener.onBookmarkChanged(bookmarksToPDFBookmark(bookmarkProvider.getBookmarks()));
 //                onBookmarksChangedListener.onBookmarkEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
             }
         }
@@ -107,6 +108,20 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return handled || super.onOptionsItemSelected(item);
     }
 
+    private Set<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
+//        var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
+//        for (appBookmark in bookmarks){
+//            convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
+//        }
+//
+//        return convertedBookmarks.toSet()
+        Set<PDFBookmark> convertedBookmarks = new HashSet<PDFBookmark>();
+        for (Bookmark bookmark: bookmarks){
+            convertedBookmarks.add(new PDFBookmark(bookmark.getPageIndex()));
+        }
+
+        return convertedBookmarks;
+    }
 
 
     private boolean containsBookmarkForPage(List<Bookmark> bookmarks, int page) {
@@ -175,7 +190,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     @NotNull
     @Override
-    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFPage> bookmarks, @NotNull Context context, @NotNull PDFRendererListener listener) {
+    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFBookmark> bookmarks, @NotNull Context context, @NotNull PDFRendererListener listener) {
         // Set license key
         try {
             PSPDFKit.initialize(context, ApiKeys.PSPDFKitLicenseKey);
@@ -184,6 +199,9 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         }
 
         this.delegateListener = listener;
+
+        // save bookmarks
+        setCurrentBookmarks(bookmarks);
 
         // Set configuration
         PdfActivityConfiguration config = new PdfActivityConfiguration
@@ -206,24 +224,24 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     @NotNull
     @Override
-    public PDFPage getCurrentPage() {
+    public Set<PDFBookmark> getCurrentBookmarks() {
         return null;
     }
 
     @Override
-    public void setCurrentPage(@NotNull PDFPage pdfPage) {
-
+    public void setCurrentBookmarks(@NotNull Set<PDFBookmark> set) {
+        bookmarksToCreate = pdfBookmarkToIntArray(set);
     }
 
-    @NotNull
-    @Override
-    public List<PDFPage> getCurrentBookmarks() {
-        return null;
-    }
+    private int[] pdfBookmarkToIntArray(Set<PDFBookmark> set) {
+        int[] ret = new int[set.size()];
+        int i = 0;
+        for (PDFBookmark bookmark : set){
+            ret[i] = bookmark.getPageNumber();
+            i++;
+        }
 
-    @Override
-    public void setCurrentBookmarks(@NotNull List<PDFPage> list) {
-
+        return ret;
     }
 
     @NotNull
@@ -237,4 +255,13 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     }
 
+    @Override
+    public int getCurrentPage() {
+        return 0;
+    }
+
+    @Override
+    public void setCurrentPage(int i) {
+
+    }
 }

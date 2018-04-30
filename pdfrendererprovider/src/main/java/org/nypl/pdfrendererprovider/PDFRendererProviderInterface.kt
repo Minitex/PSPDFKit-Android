@@ -13,30 +13,35 @@ import android.util.Log
 interface PDFRendererProviderInterface {
 
     //simplifiedpspdfkit will need to override these properties' get/set
-    var currentPage: PDFPage
-    var currentBookmarks: List<PDFPage>
+    var currentPage: Int
+    var currentBookmarks: Set<PDFBookmark>
     var notes: List<PDFAnnotation>
 
     //simplifiedpspdfkit will need to override these functions
-    fun buildIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFPage>, context: Context, listener: PDFRendererListener) : Intent
+    fun buildIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, context: Context, listener: PDFRendererListener) : Intent
 
 }
 
 //Host will need to implement this listener
 interface PDFRendererListener {
-
-    fun onBookmarkChanged()
-    fun onPageChanged()
+    fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>)
+    fun onPageChanged(pageIndex: Int)
 }
 
-class PDFPage(val pageNumber: Int) {
+//class PDFPage(val pageNumber: Int) {
+//
+//    init {
+//        //("The page set for this bookmark is ${pageNumber}")
+//    }
+//}
 
-    init {
-        //("The page set for this bookmark is ${pageNumber}")
+class PDFBookmark(val pageNumber: Int){
+    init{
+
     }
 }
 
-class PDFAnnotation(val page: PDFPage, val boundingRect: List<Int>, val text: String) {
+class PDFAnnotation(val page: Int, val boundingRect: List<Int>, val text: String) {
 
     init {
         //print("I'm just making up parameters right now...")

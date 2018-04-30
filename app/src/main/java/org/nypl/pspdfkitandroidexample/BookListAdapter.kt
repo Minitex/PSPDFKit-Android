@@ -7,14 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
-import org.nypl.pdfrendererprovider.PDFPage
+import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.pdfrendererprovider.PDFRendererListener
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
 
 /**
  * Created by nieho003 on 2/23/2018.
  */
-class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter<BookListAdapter.BookHolder>(), PDFRendererListener {
+class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter<BookListAdapter.BookHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookListAdapter.BookHolder {
         val inflatedView = parent.inflate(R.layout.book_list_item_row, false)
@@ -30,21 +30,18 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
     // 1. todo: move these listeners to the pdfrenderer provider
 // 2. create new interface in rendererprovider module that replace current OnBookmarks.. OnPageChanged...
-    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
+    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, PDFRendererListener {
 
         var rendererProvider : PDFRendererProvider = PDFRendererProvider()
-        var pdfRenderer:PDFRenderer = PDFRenderer()
 
-        //
-        override fun onPageChangedEvent(pageIndex: Int) {
+        override fun onPageChanged(pageIndex: Int) {
             book?.lastPageRead = pageIndex
             updateView()
-
-
         }
 
-        override fun onBookmarkEvent(newBookmarks: IntArray) {
-            book?.bookmarks = rendererProvider.intArrayToPdfBookmarkSet(newBookmarks)
+        override fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>) {
+            //book?.bookmarks = rendererProvider.intArrayToPdfBookmarkSet(newBookmarks)
+            book?.bookmarks = convertToAppBookmarks(newBookmarks)
             updateView()
         }
 
@@ -76,7 +73,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
         }
 
-        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<PDFPage>) {
+        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
 
             //A "weak link" to the module starts with a string leading to that class path
             val classString = "org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity"
@@ -87,11 +84,27 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             //and since it's at runtime you can ONLY interact with the object through the casted interface
             val pdfRendererInstance = kclass as PDFRendererProviderInterface
 
-            val intent = pdfRendererInstance.buildIntent(assetFile, lastRead, bookmarks, context, this)
+            val intent = pdfRendererInstance.buildIntent(assetFile, lastRead, convertToRendererBookmarks(bookmarks), context, this)
 
             context.startActivity(intent)
         }
 
+        private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {
+            var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
+            for (appBookmark in bookmarks){
+                convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
+            }
 
+            return convertedBookmarks.toSet()
+        }
+
+        private fun convertToAppBookmarks(bookmarks: Set<PDFBookmark>): Set<AppBookmark> {
+            var convertedBookmarks : MutableSet<AppBookmark> = mutableSetOf()
+            for (appBookmark in bookmarks){
+                convertedBookmarks.add(AppBookmark(appBookmark.pageNumber))
+            }
+
+            return convertedBookmarks.toSet()
+        }
     }
 }

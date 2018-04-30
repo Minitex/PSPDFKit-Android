@@ -8,11 +8,11 @@ import com.pspdfkit.bookmarks.Bookmark
  */
 class Book {
     var title: String
-    var bookmarks: Set<PDFBookmark>
+    var bookmarks: Set<AppBookmark>
     var resourceUri: Uri
     var lastPageRead: Int = 0
 
-    constructor(title: String, bookmarks: Set<PDFBookmark>, lastPageRead: Int, resourceUri: Uri){
+    constructor(title: String, bookmarks: Set<AppBookmark>, lastPageRead: Int, resourceUri: Uri){
         this.title = title
         this.bookmarks = bookmarks
         this.lastPageRead = lastPageRead
