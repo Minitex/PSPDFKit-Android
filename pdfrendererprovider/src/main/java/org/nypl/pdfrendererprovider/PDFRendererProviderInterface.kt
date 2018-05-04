@@ -3,6 +3,8 @@ package org.nypl.pdfrendererprovider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Parcel
+import android.os.Parcelable
 
 /**
  * Both the host app and simplifiedpspdfkit will import this module,
@@ -17,17 +19,21 @@ interface PDFRendererProviderInterface {
     fun buildPDFRendererIntent(assetFile: Uri,
                                lastRead: Int,
                                bookmarks: Set<PDFBookmark>,
-                               context: Context): Intent
+                               context: Context,
+                               listener: Class<PDFRendererListener>,
+                               initialState: Parcelable): Intent
 }
 
 interface PDFRendererListener {
+    fun setInitialState(state: Parcelable)
     fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>)
     fun onPageChanged(pageIndex: Int)
 }
 
 class PDFConstants {
     companion object {
-        val intentKey = "org.nypl.pdfRenderer.intentKey"
+        val initialStateKey = "org.nypl.pdfRenderer.initialStateKey"
+        val listenerKey = "org.nypl.pdfRenderer.listenerKey"
     }
 }
 

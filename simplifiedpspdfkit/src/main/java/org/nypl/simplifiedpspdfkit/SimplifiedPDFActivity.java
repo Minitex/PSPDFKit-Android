@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -60,12 +61,17 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
 
-        final Object listener = getIntent().getParcelableExtra(PDFConstants.Companion.getIntentKey());
-        if (listener instanceof PDFRendererListener) {
-            this.delegateListener = (PDFRendererListener) listener;
-        } else {
-            throw new RuntimeException("Error getting listener from parcel.");
+        final Class<PDFRendererListener> listenerClass = (Class<PDFRendererListener>) getIntent().getSerializableExtra(PDFConstants.Companion.getListenerKey());
+        final PDFRendererListener listenerInstance;
+        try {
+            listenerInstance = listenerClass.newInstance();
+            this.delegateListener = listenerInstance;
+            listenerInstance.setInitialState(getIntent().getParcelableExtra(PDFConstants.Companion.getInitialStateKey()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
         }
+
     }
 
     @Override
@@ -196,37 +202,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return bookmarkArray;
     }
 
-    @NotNull
-    @Override
-    public Intent buildPDFRendererIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFBookmark> bookmarks, @NotNull Context context) {
-        // Set license key
-        try {
-            PSPDFKit.initialize(context, ApiKeys.Companion.getPSPDFKitLicenseKey());
-        } catch (PSPDFKitInitializationFailedException e) {
-            Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
-        }
-
-        // save bookmarks
-        setCurrentBookmarks(bookmarks);
-
-        // Set configuration
-        PdfActivityConfiguration config = new PdfActivityConfiguration
-                .Builder(context)
-                .disableDocumentEditor()
-                .disableAnnotationEditing()
-                .disableAnnotationList()
-                .disableShare()
-                .disablePrinting()
-                .disableFormEditing()
-                .page(lastRead - 1)
-                .build();
-
-
-        return PdfActivityIntentBuilder.fromUri(context, assetFile)
-                .configuration(config)
-                .activityClass(SimplifiedPDFActivity.class)
-                .build();
-    }
 
     @NotNull
     @Override
@@ -234,10 +209,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return null;
     }
 
-    @Override
-    public void setCurrentBookmarks(@NotNull Set<PDFBookmark> set) {
-        bookmarksToCreate = pdfBookmarkToIntArray(set);
-    }
+//    @Override
+//    public void setCurrentBookmarks(@NotNull Set<PDFBookmark> set) {
+//        bookmarksToCreate = pdfBookmarkToIntArray(set);
+//    }
 
     private int[] pdfBookmarkToIntArray(Set<PDFBookmark> set) {
         int[] ret = new int[set.size()];
