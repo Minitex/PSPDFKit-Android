@@ -43,3 +43,5 @@ build/
 app/src/main/java/org/nypl/pspdfkit_android_example/ApiKeys\.kt
 
 app/src/main/java/org/nypl/pspdfkitandroidexample/ApiKeys\.kt
+
+simplifiedpspdfkit/src/main/java/org/nypl/simplifiedpspdfkit/ApiKeys\.kt

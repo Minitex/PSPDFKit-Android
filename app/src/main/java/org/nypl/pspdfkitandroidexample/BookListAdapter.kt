@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
+import org.nypl.simplifiedpspdfkit.ApiKeys
 import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
 import org.nypl.simplifiedpspdfkit.OnPageChangedListener
 import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
