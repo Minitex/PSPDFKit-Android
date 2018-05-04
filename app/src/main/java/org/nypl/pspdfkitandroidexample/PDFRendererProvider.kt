@@ -12,10 +12,10 @@ import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 class PDFRendererProvider {
     lateinit var renderer : PDFRendererProviderInterface
 
-//    fun buildIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, pspdfKitLicenseKey: String, context: Context, pageChangedListener: OnPageChangedListener, bookmarksChangedListener: OnBookmarksChangedListener): Intent? {
+//    fun buildPDFRendererIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, pspdfKitLicenseKey: String, context: Context, pageChangedListener: OnPageChangedListener, bookmarksChangedListener: OnBookmarksChangedListener): Intent? {
 //        renderer = SimplifiedPDFActivity()
 //        var bookmarksArray = pdfBookmarkSetToIntArray(bookmarks)
-//        return renderer.buildIntent(assetFile, lastRead, bookmarksArray, pspdfKitLicenseKey, context, pageChangedListener, bookmarksChangedListener)
+//        return renderer.buildPDFRendererIntent(assetFile, lastRead, bookmarksArray, pspdfKitLicenseKey, context, pageChangedListener, bookmarksChangedListener)
 //    }
 
     fun pdfBookmarkSetToIntArray(bookmarks: Set<PDFBookmark>): IntArray {

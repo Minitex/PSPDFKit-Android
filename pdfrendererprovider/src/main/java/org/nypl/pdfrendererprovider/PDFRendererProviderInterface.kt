@@ -3,7 +3,6 @@ package org.nypl.pdfrendererprovider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 
 /**
  * Both the host app and simplifiedpspdfkit will import this module,
@@ -11,39 +10,27 @@ import android.util.Log
  */
 
 interface PDFRendererProviderInterface {
-
-    //simplifiedpspdfkit will need to override these properties' get/set
     var currentPage: Int
     var currentBookmarks: Set<PDFBookmark>
     var notes: List<PDFAnnotation>
 
-    //simplifiedpspdfkit will need to override these functions
-    fun buildIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, context: Context, listener: PDFRendererListener) : Intent
-
+    fun buildPDFRendererIntent(assetFile: Uri,
+                               lastRead: Int,
+                               bookmarks: Set<PDFBookmark>,
+                               context: Context): Intent
 }
 
-//Host will need to implement this listener
 interface PDFRendererListener {
     fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>)
     fun onPageChanged(pageIndex: Int)
 }
 
-//class PDFPage(val pageNumber: Int) {
-//
-//    init {
-//        //("The page set for this bookmark is ${pageNumber}")
-//    }
-//}
-
-class PDFBookmark(val pageNumber: Int){
-    init{
-
+class PDFConstants {
+    companion object {
+        val intentKey = "org.nypl.pdfRenderer.intentKey"
     }
 }
 
-class PDFAnnotation(val page: Int, val boundingRect: List<Int>, val text: String) {
+data class PDFBookmark(val pageNumber: Int)
 
-    init {
-        //print("I'm just making up parameters right now...")
-    }
-}
+data class PDFAnnotation(val page: Int, val boundingRect: List<Int>, val text: String)

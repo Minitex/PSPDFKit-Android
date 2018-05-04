@@ -24,6 +24,7 @@ import com.pspdfkit.ui.PdfActivityIntentBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
+import org.nypl.pdfrendererprovider.PDFConstants;
 import org.nypl.pdfrendererprovider.PDFRendererListener;
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
 
@@ -58,6 +59,13 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
+
+        final Object listener = getIntent().getParcelableExtra(PDFConstants.Companion.getIntentKey());
+        if (listener instanceof PDFRendererListener) {
+            this.delegateListener = (PDFRendererListener) listener;
+        } else {
+            throw new RuntimeException("Error getting listener from parcel.");
+        }
     }
 
     @Override
@@ -190,15 +198,13 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     @NotNull
     @Override
-    public Intent buildIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFBookmark> bookmarks, @NotNull Context context, @NotNull PDFRendererListener listener) {
+    public Intent buildPDFRendererIntent(@NotNull Uri assetFile, int lastRead, @NotNull Set<PDFBookmark> bookmarks, @NotNull Context context) {
         // Set license key
         try {
-            PSPDFKit.initialize(context, ApiKeys.PSPDFKitLicenseKey);
+            PSPDFKit.initialize(context, ApiKeys.Companion.getPSPDFKitLicenseKey());
         } catch (PSPDFKitInitializationFailedException e) {
             Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
         }
-
-        this.delegateListener = listener;
 
         // save bookmarks
         setCurrentBookmarks(bookmarks);

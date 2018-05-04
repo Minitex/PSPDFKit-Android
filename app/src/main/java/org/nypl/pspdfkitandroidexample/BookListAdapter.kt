@@ -8,8 +8,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
 import org.nypl.pdfrendererprovider.PDFBookmark
-import org.nypl.pdfrendererprovider.PDFRendererListener
+import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
+import org.nypl.simplifiedpspdfkit.HostListener
+import kotlin.reflect.full.createInstance
 
 /**
  * Created by nieho003 on 2/23/2018.
@@ -28,22 +30,9 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
     override fun getItemCount() = books.size
 
-    // 1. todo: move these listeners to the pdfrenderer provider
-// 2. create new interface in rendererprovider module that replace current OnBookmarks.. OnPageChanged...
-    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener, PDFRendererListener {
+    class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
 
         var rendererProvider : PDFRendererProvider = PDFRendererProvider()
-
-        override fun onPageChanged(pageIndex: Int) {
-            book?.lastPageRead = pageIndex
-            updateView()
-        }
-
-        override fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>) {
-            //book?.bookmarks = rendererProvider.intArrayToPdfBookmarkSet(newBookmarks)
-            book?.bookmarks = convertToAppBookmarks(newBookmarks)
-            updateView()
-        }
 
         private var view: View = v
         private var book: Book? = null
@@ -75,16 +64,14 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
 
-            //A "weak link" to the module starts with a string leading to that class path
             val classString = "org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity"
-
-            //Use java reflection to get the class at runtime.
             val kclass = Class.forName(classString).kotlin
-            //This is untested so may need a tweak or two, but this way you save yourself a circular import,
-            //and since it's at runtime you can ONLY interact with the object through the casted interface
-            val pdfRendererInstance = kclass as PDFRendererProviderInterface
+            val pdfRendererInstance = kclass.createInstance() as PDFRendererProviderInterface
 
-            val intent = pdfRendererInstance.buildIntent(assetFile, lastRead, convertToRendererBookmarks(bookmarks), context, this)
+            val listener = HostListener()
+
+            val intent = pdfRendererInstance.buildPDFRendererIntent(assetFile, lastRead, convertToRendererBookmarks(bookmarks), context)
+            intent.putExtra(PDFConstants.intentKey, listener)
 
             context.startActivity(intent)
         }
