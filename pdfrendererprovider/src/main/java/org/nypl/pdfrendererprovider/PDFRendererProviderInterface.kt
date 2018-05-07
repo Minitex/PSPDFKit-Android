@@ -12,20 +12,17 @@ import android.os.Parcelable
  */
 
 interface PDFRendererProviderInterface {
-    var currentPage: Int
-    var currentBookmarks: Set<PDFBookmark>
-    var notes: List<PDFAnnotation>
+    var currentPage: Int?
+    var currentBookmarks: Set<PDFBookmark>?
+    var notes: List<PDFAnnotation>?
 
     fun buildPDFRendererIntent(assetFile: Uri,
                                lastRead: Int,
                                bookmarks: Set<PDFBookmark>,
-                               context: Context,
-                               listener: Class<PDFRendererListener>,
-                               initialState: Parcelable): Intent
+                               context: Context): Intent
 }
 
 interface PDFRendererListener {
-    fun setInitialState(state: Parcelable)
     fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>)
     fun onPageChanged(pageIndex: Int)
 }

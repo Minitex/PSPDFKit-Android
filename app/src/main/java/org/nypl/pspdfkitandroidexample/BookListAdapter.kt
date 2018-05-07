@@ -10,7 +10,6 @@ import kotlinx.android.synthetic.main.book_list_item_row.view.*
 import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
-import org.nypl.simplifiedpspdfkit.HostListener
 import kotlin.reflect.full.createInstance
 
 /**
@@ -64,16 +63,18 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
         private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
 
-            val classString = "org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity"
+            val classString = "org.nypl.simplifiedpspdfkit.PSPDFKitProvider"
             val kclass = Class.forName(classString).kotlin
-            val pdfRendererInstance = kclass.createInstance() as PDFRendererProviderInterface
+            val renderer = kclass.createInstance() as PDFRendererProviderInterface
 
-            val listener = HostListener()
+            val intent = renderer.buildPDFRendererIntent(
+                    assetFile,
+                    lastRead,
+                    convertToRendererBookmarks(bookmarks),
+                    context
+            )
 
-            val intent = pdfRendererInstance.buildPDFRendererIntent(assetFile, lastRead, convertToRendererBookmarks(bookmarks), context)
-            intent.putExtra(PDFConstants.intentKey, listener)
-
-            context.startActivity(intent)
+            (context as MainActivity).startActivityForResult(intent, 1)
         }
 
         private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {

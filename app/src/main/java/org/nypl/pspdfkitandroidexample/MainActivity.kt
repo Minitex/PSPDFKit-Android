@@ -1,5 +1,6 @@
 package org.nypl.pspdfkitandroidexample
 
+import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -35,5 +36,11 @@ class MainActivity : AppCompatActivity() {
         booksList.add(book1)
         var book2 = Book("Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        print("We have received data from the child activity!!!")
     }
 }

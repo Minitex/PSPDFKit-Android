@@ -1,47 +1,55 @@
 package org.nypl.simplifiedpspdfkit
 
-import android.os.Parcel
-import android.os.Parcelable
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import org.nypl.pdfrendererprovider.PDFAnnotation
 import org.nypl.pdfrendererprovider.PDFBookmark
-import org.nypl.pdfrendererprovider.PDFRendererListener
+import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
+import com.pspdfkit.ui.PdfActivityIntentBuilder
+import com.pspdfkit.configuration.activity.PdfActivityConfiguration
+import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException
+import com.pspdfkit.PSPDFKit
 
-class HostListener() : PDFRendererListener, Parcelable {
 
-    /*
-    Parcelable Methods
-     */
 
-    constructor(parcel: Parcel) : this() {
-        print("Serialize and set data from Parcel. Currently no data to read.")
-    }
+class PSPDFKitProvider() : PDFRendererProviderInterface {
 
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        print("Write data to the parcel. Currently no data to write.")
-    }
+    override var currentPage: Int? = null
+    override var currentBookmarks: Set<PDFBookmark>? = null
+    override var notes: List<PDFAnnotation>? = null
 
-    override fun describeContents(): Int {
-        return 0
-    }
+    override fun buildPDFRendererIntent(assetFile: Uri,
+                                        lastRead: Int,
+                                        bookmarks: Set<PDFBookmark>,
+                                        context: Context): Intent {
 
-    companion object CREATOR : Parcelable.Creator<HostListener> {
-        override fun createFromParcel(parcel: Parcel): HostListener {
-            return HostListener(parcel)
+        // Set license key
+        try {
+            PSPDFKit.initialize(context, ApiKeys.PSPDFKitLicenseKey)
+        } catch (e: PSPDFKitInitializationFailedException) {
+            print("Failed to init with PSPDFKit license key.")
+            System.exit(1)
         }
 
-        override fun newArray(size: Int): Array<HostListener?> {
-            return arrayOfNulls(size)
-        }
-    }
+        //This class would take 'lastRead' and 'bookmarks' and convert those
+        //into working objects to add to "PSPDFKit's" config object here..
+        //in order to get the state of the book back to where it was
 
-    /*
-    PDFRendererListener Methods
-     */
+        // Set configuration
+        val config = PdfActivityConfiguration.Builder(context)
+                .disableDocumentEditor()
+                .disableAnnotationEditing()
+                .disableAnnotationList()
+                .disableShare()
+                .disablePrinting()
+                .disableFormEditing()
+                .page(lastRead - 1)
+                .build()
 
-    override fun onPageChanged(pageIndex: Int) {
-        print("Page Index changed! The host is listening: ${pageIndex}")
-    }
-
-    override fun onBookmarkChanged(newBookmarks: Set<PDFBookmark>) {
-        print("New bookmarks received! The host is listening: ${newBookmarks}")
+        return PdfActivityIntentBuilder.fromUri(context, assetFile)
+                .configuration(config)
+                .activityClass(SimplifiedPDFActivity::class.java)
+                .build()
     }
 }
