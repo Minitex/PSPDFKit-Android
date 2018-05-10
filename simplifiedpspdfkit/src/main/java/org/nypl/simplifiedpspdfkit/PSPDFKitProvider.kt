@@ -12,7 +12,6 @@ import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException
 import com.pspdfkit.PSPDFKit
 
 
-
 class PSPDFKitProvider() : PDFRendererProviderInterface {
 
     override var currentPage: Int? = null

@@ -31,7 +31,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
     class BookHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener {
 
-        var rendererProvider : PDFRendererProvider = PDFRendererProvider()
+        var rendererProvider: PDFRendererProvider = PDFRendererProvider()
 
         private var view: View = v
         private var book: Book? = null
@@ -44,7 +44,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             val context = itemView.context
             if (book != null) {
                 Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show()
-                startPdfActivity(context, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks)
+                startPdfActivity(context, book!!.bookId, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks)
             } else {
                 Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show()
             }
@@ -55,13 +55,13 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             updateView()
         }
 
-        private fun updateView(){
+        private fun updateView() {
             view.bookTitle.text = book?.title
             view.lastPageRead.text = "Last Page Read: " + book?.lastPageRead.toString()
             view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
         }
 
-        private fun startPdfActivity(context: Context, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
+        private fun startPdfActivity(context: Context, bookId: Int, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
 
             val classString = "org.nypl.simplifiedpspdfkit.PSPDFKitProvider"
             val kclass = Class.forName(classString).kotlin
@@ -74,12 +74,14 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
                     context
             )
 
+            intent.putExtra(PDFConstants.PDF_ID_EXTRA, bookId)
+
             (context as MainActivity).startActivityForResult(intent, 1)
         }
 
         private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {
-            var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
-            for (appBookmark in bookmarks){
+            var convertedBookmarks: MutableSet<PDFBookmark> = mutableSetOf()
+            for (appBookmark in bookmarks) {
                 convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
             }
 
@@ -87,8 +89,8 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
         }
 
         private fun convertToAppBookmarks(bookmarks: Set<PDFBookmark>): Set<AppBookmark> {
-            var convertedBookmarks : MutableSet<AppBookmark> = mutableSetOf()
-            for (appBookmark in bookmarks){
+            var convertedBookmarks: MutableSet<AppBookmark> = mutableSetOf()
+            for (appBookmark in bookmarks) {
                 convertedBookmarks.add(AppBookmark(appBookmark.pageNumber))
             }
 

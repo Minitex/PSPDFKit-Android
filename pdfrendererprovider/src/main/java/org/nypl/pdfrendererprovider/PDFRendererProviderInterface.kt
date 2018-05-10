@@ -31,6 +31,10 @@ class PDFConstants {
     companion object {
         val initialStateKey = "org.nypl.pdfRenderer.initialStateKey"
         val listenerKey = "org.nypl.pdfRenderer.listenerKey"
+        val PDF_ID_EXTRA = "org.nypl.pdfRendere.uri_extra"
+        val PDF_URI_EXTRA = "org.nypl.pdfRenderer.uri_extra"
+        val PDF_PAGE_READ_EXTRA = "org.nypl.pdfRenderer.page_read_extra"
+        val PDF_BOOKMARKS_EXTRA = "org.nypl.pdfRenderer.bookmarks_extra"
     }
 }
 
