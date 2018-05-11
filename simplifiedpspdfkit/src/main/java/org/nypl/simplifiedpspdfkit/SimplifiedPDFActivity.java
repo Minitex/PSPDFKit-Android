@@ -76,14 +76,29 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     @Override
     public void onBackPressed() {
         //create an intent with any data you want the host to get, and add that to "setResult()" method
+//        Intent returnIntent = new Intent();
+//        String uri = document.getUid();
+//        int pageRead = getPageIndex();
+//        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
+//        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+//        setResult(RESULT_OK, returnIntent);
+
+        super.onBackPressed();
+    }
+
+    @Override
+    public void finish() {
         Intent returnIntent = new Intent();
-        String uri = document.getUid();
         int pageRead = getPageIndex();
         returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
         returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
         setResult(RESULT_OK, returnIntent);
+        super.finish();
+    }
 
-        super.onBackPressed();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override

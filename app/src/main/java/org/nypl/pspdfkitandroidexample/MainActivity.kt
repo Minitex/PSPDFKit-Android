@@ -35,7 +35,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun populateBooks() {
-        var book1 = Book(1, "Financial Accounting", kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
+        var book1Bookmarks : MutableSet<AppBookmark> = hashSetOf(AppBookmark(1), AppBookmark(3), AppBookmark(35))
+        var book1 = Book(1, "Financial Accounting", book1Bookmarks, 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
         var book2 = Book(2, "Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)
