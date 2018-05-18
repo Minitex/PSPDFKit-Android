@@ -20,7 +20,6 @@ class PSPDFKitProvider() : PDFRendererProviderInterface {
 
     override fun buildPDFRendererIntent(assetFile: Uri,
                                         lastRead: Int,
-                                        bookmarks: Set<PDFBookmark>,
                                         context: Context): Intent {
 
         // Set license key

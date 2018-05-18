@@ -70,31 +70,22 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             val intent = renderer.buildPDFRendererIntent(
                     assetFile,
                     lastRead,
-                    convertToRendererBookmarks(bookmarks),
                     context
             )
 
             intent.putExtra(PDFConstants.PDF_ID_EXTRA, bookId)
+            intent.putExtra(PDFConstants.PDF_BOOKMARKS_EXTRA, convertToRendererBookmarks(bookmarks))
 
             (context as MainActivity).startActivity(intent)
         }
 
-        private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {
-            var convertedBookmarks: MutableSet<PDFBookmark> = mutableSetOf()
+        private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): ArrayList<PDFBookmark> {
+            val convertedBookmarks = arrayListOf<PDFBookmark>()
             for (appBookmark in bookmarks) {
                 convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
             }
 
-            return convertedBookmarks.toSet()
-        }
-
-        private fun convertToAppBookmarks(bookmarks: Set<PDFBookmark>): Set<AppBookmark> {
-            var convertedBookmarks: MutableSet<AppBookmark> = mutableSetOf()
-            for (appBookmark in bookmarks) {
-                convertedBookmarks.add(AppBookmark(appBookmark.pageNumber))
-            }
-
-            return convertedBookmarks.toSet()
+            return convertedBookmarks
         }
     }
 }

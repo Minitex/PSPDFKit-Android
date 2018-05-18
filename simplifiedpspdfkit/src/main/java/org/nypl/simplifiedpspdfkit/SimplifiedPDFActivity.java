@@ -55,12 +55,12 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             if (documentId >= 0) {
                 this.documentId = documentId;
             }
-        }
-    }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
+            ArrayList<PDFBookmark> bookmarksExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA());
+            if (bookmarksExtra != null && bookmarksExtra.size() > 0) {
+                bookmarksToCreate = pdfBookmarkToIntArray(bookmarksExtra);
+            }
+        }
     }
 
     @Override
@@ -72,7 +72,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     public void onDocumentLoaded(@NonNull PdfDocument document) {
         super.onDocumentLoaded(document);
 
-        this.document = getDocument();
         this.bookmarkProvider = document.getBookmarkProvider();
 
         if (bookmarksToCreate != null && bookmarksToCreate.length > 0) {
@@ -83,7 +82,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                 if (!containsBookmarkForPage(currentBookmarks, bookmarkPage)) {
                     if (bookmarkPage > 0) {
                         this.bookmarkProvider.addBookmark(new Bookmark(bookmarkPage));
-                        break;
                     }
                 }
             }
@@ -152,6 +150,17 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         }
 
         return null;
+    }
+
+    private int[] pdfBookmarkToIntArray(ArrayList<PDFBookmark> bookmarksExtra) {
+        int[] ret = new int[bookmarksExtra.size()];
+        int i = 0;
+        for (PDFBookmark bookmark : bookmarksExtra) {
+            ret[i] = bookmark.getPageNumber();
+            i++;
+        }
+
+        return ret;
     }
 
     private void setBookmarkIcon(int pageIndex) {
