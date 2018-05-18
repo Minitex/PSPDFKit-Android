@@ -8,6 +8,7 @@ import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,6 +29,7 @@ import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
 import org.nypl.pdfrendererprovider.PDFRendererListener;
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
+import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
 import java.util.HashSet;
 import java.util.List;
@@ -127,6 +129,14 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     public void onPageChanged(@NonNull PdfDocument document, int pageIndex) {
         super.onPageChanged(document, pageIndex);
         setBookmarkIcon(pageIndex);
+        sendPageChangedMessage(pageIndex);
+    }
+
+    private void sendPageChangedMessage(int pageIndex){
+        Intent intent = new Intent(PDFBroadcaster.Companion.getBROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageIndex);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     @Override
