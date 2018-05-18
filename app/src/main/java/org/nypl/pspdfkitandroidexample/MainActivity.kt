@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+
+                adapter.notifyDataSetChanged()
             }
         }
     }
@@ -77,6 +79,8 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+
+                adapter.notifyDataSetChanged()
             }
         }
     }
