@@ -36,7 +36,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     private static int[] bookmarksToCreate;
     private static int documentId;
     private Menu menu;
-    private PdfDocument document;
     private BookmarkProvider bookmarkProvider;
 
     @Override
@@ -62,29 +61,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-    }
-
-    @Override
-    public void onBackPressed() {
-        //create an intent with any data you want the host to get, and add that to "setResult()" method
-//        Intent returnIntent = new Intent();
-//        String uri = document.getUid();
-//        int pageRead = getPageIndex();
-//        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
-//        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
-//        setResult(RESULT_OK, returnIntent);
-
-        super.onBackPressed();
-    }
-
-    @Override
-    public void finish() {
-        Intent returnIntent = new Intent();
-        int pageRead = getPageIndex();
-        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
-        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
-        setResult(RESULT_OK, returnIntent);
-        super.finish();
     }
 
     @Override
@@ -121,14 +97,14 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         sendPageChangedMessage(pageIndex);
     }
 
-    private void sendPageChangedMessage(int pageIndex){
+    private void sendPageChangedMessage(int pageIndex) {
         Intent intent = new Intent(PDFBroadcaster.Companion.getPAGE_CHANGED_BROADCAST_EVENT_NAME());
         intent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageIndex);
         intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void sendBookmarksChangedMessage(){
+    private void sendBookmarksChangedMessage() {
         ArrayList<PDFBookmark> bookmarks = bookmarksToPDFBookmark(bookmarkProvider.getBookmarks());
         Intent intent = new Intent(PDFBroadcaster.Companion.getBOOKMARKS_CHANGED_BROADCAST_EVENT_NAME());
         intent.putExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA(), bookmarks);
@@ -149,12 +125,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
-//        var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
-//        for (appBookmark in bookmarks){
-//            convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
-//        }
-//
-//        return convertedBookmarks.toSet()
         ArrayList<PDFBookmark> convertedBookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarks) {
             convertedBookmarks.add(new PDFBookmark(bookmark.getPageIndex()));
@@ -217,27 +187,4 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         sendBookmarksChangedMessage();
         setBookmarkIcon(bookmarkPage);
     }
-
-    private int[] bookmarksToIntArray(List<Bookmark> bookmarks) {
-        // https://stackoverflow.com/a/965289/2107568
-        int[] bookmarkArray = new int[bookmarks.size()];
-        int i = 0;
-        for (Bookmark bookmark : bookmarks) {
-            bookmarkArray[i++] = bookmark.getPageIndex();
-        }
-
-        return bookmarkArray;
-    }
-
-    private int[] pdfBookmarkToIntArray(Set<PDFBookmark> set) {
-        int[] ret = new int[set.size()];
-        int i = 0;
-        for (PDFBookmark bookmark : set) {
-            ret[i] = bookmark.getPageNumber();
-            i++;
-        }
-
-        return ret;
-    }
-
 }

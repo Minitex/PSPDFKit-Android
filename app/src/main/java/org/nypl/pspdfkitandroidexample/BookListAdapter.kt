@@ -76,7 +76,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
             intent.putExtra(PDFConstants.PDF_ID_EXTRA, bookId)
 
-            (context as MainActivity).startActivityForResult(intent, 1)
+            (context as MainActivity).startActivity(intent)
         }
 
         private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {

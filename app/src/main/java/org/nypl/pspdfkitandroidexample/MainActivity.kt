@@ -110,28 +110,4 @@ class MainActivity : AppCompatActivity() {
         var book2 = Book(2, "Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1) {
-            if (resultCode == Activity.RESULT_OK && data != null) {
-                var bookId = data.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
-                var bookUri = data.getStringExtra(PDFConstants.PDF_URI_EXTRA)
-                var lastPage = data.getIntExtra(PDFConstants.PDF_PAGE_READ_EXTRA, -1)
-
-                if (bookId >= 0) {
-                    for (book in booksList) {
-                        if (book.bookId == bookId) {
-                            book.lastPageRead = lastPage
-                            break
-                        }
-                    }
-                }
-            }
-        }
-
-        adapter.notifyDataSetChanged()
-
-        print("We have received data from the child activity!!!")
-    }
 }
