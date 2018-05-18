@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
 
 /**
  * Both the host app and simplifiedpspdfkit will import this module,
@@ -38,6 +39,7 @@ class PDFConstants {
     }
 }
 
-data class PDFBookmark(val pageNumber: Int)
+@Parcelize
+data class PDFBookmark(val pageNumber: Int): Parcelable
 
 data class PDFAnnotation(val page: Int, val boundingRect: List<Int>, val text: String)

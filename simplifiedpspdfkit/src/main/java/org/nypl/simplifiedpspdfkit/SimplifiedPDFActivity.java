@@ -1,36 +1,25 @@
 package org.nypl.simplifiedpspdfkit;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.pspdfkit.PSPDFKit;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
-import com.pspdfkit.configuration.activity.PdfActivityConfiguration;
 import com.pspdfkit.document.PdfDocument;
-import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
-import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
-import org.jetbrains.annotations.NotNull;
-import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
-import org.nypl.pdfrendererprovider.PDFRendererListener;
-import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -133,8 +122,16 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private void sendPageChangedMessage(int pageIndex){
-        Intent intent = new Intent(PDFBroadcaster.Companion.getBROADCAST_EVENT_NAME());
+        Intent intent = new Intent(PDFBroadcaster.Companion.getPAGE_CHANGED_BROADCAST_EVENT_NAME());
         intent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageIndex);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void sendBookmarksChangedMessage(){
+        ArrayList<PDFBookmark> bookmarks = bookmarksToPDFBookmark(bookmarkProvider.getBookmarks());
+        Intent intent = new Intent(PDFBroadcaster.Companion.getBOOKMARKS_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA(), bookmarks);
         intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
@@ -151,14 +148,14 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return handled || super.onOptionsItemSelected(item);
     }
 
-    private Set<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
+    private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
 //        var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
 //        for (appBookmark in bookmarks){
 //            convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
 //        }
 //
 //        return convertedBookmarks.toSet()
-        Set<PDFBookmark> convertedBookmarks = new HashSet<PDFBookmark>();
+        ArrayList<PDFBookmark> convertedBookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarks) {
             convertedBookmarks.add(new PDFBookmark(bookmark.getPageIndex()));
         }
@@ -217,6 +214,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
         }
 
+        sendBookmarksChangedMessage();
         setBookmarkIcon(bookmarkPage);
     }
 

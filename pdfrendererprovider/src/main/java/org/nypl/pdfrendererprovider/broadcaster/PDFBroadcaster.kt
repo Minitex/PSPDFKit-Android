@@ -1,6 +1,7 @@
 package org.nypl.pdfrendererprovider.broadcaster
 class PDFBroadcaster{
     companion object {
-        val BROADCAST_EVENT_NAME = "broadcast-event";
+        val PAGE_CHANGED_BROADCAST_EVENT_NAME = "page-changed-broadcast-event"
+        val BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME = "bookmarks-changed-broadcast-event"
     }
 }

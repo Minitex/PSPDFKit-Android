@@ -11,9 +11,9 @@ import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
+import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster
-import org.nypl.pspdfkitandroidexample.R.id.rv_book_list
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,14 +34,18 @@ class MainActivity : AppCompatActivity() {
         adapter = BookListAdapter(booksList)
         rv_book_list.adapter = adapter
 
-        // Broadcast listener
+        // Broadcast listeners
         LocalBroadcastManager
                 .getInstance(this)
-                .registerReceiver(messageReceiver, IntentFilter(PDFBroadcaster.BROADCAST_EVENT_NAME))
+                .registerReceiver(pageChangedMessageReceiver, IntentFilter(PDFBroadcaster.PAGE_CHANGED_BROADCAST_EVENT_NAME))
+
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(bookmarksChangedMessageReceiver, IntentFilter(PDFBroadcaster.BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME))
     }
 
     // https://stackoverflow.com/a/45399437
-    val messageReceiver = object : BroadcastReceiver() {
+    private val pageChangedMessageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent != null) {
                 var idExtra = intent.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
@@ -59,12 +63,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val bookmarksChangedMessageReceiver  = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent != null) {
+                var idExtra = intent.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
+                var bookmarksExtra = intent.getParcelableArrayListExtra<PDFBookmark>(PDFConstants.PDF_BOOKMARKS_EXTRA)
+
+                if (idExtra >= 0) {
+                    for (book in booksList) {
+                        if (book.bookId == idExtra) {
+                            book.bookmarks = convertBookmarksToAppBookmark(bookmarksExtra)
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun convertBookmarksToAppBookmark(bookmarksExtra: java.util.ArrayList<PDFBookmark>?): Set<AppBookmark> {
+        var appBookmarks : MutableSet<AppBookmark> = hashSetOf()
+        if (bookmarksExtra != null) {
+            for (bookmark in bookmarksExtra.iterator())
+            {
+                appBookmarks.add(AppBookmark(bookmark.pageNumber))
+            }
+        }
+
+        return appBookmarks
+    }
+
     override fun onStart() {
         super.onStart()
     }
 
     override fun onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(pageChangedMessageReceiver)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(bookmarksChangedMessageReceiver)
         super.onDestroy()
     }
 
