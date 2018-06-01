@@ -35,10 +35,12 @@ class PDFConstants {
         val PDF_URI_EXTRA = "org.nypl.pdfRenderer.uri_extra"
         val PDF_PAGE_READ_EXTRA = "org.nypl.pdfRenderer.page_read_extra"
         val PDF_BOOKMARKS_EXTRA = "org.nypl.pdfRenderer.bookmarks_extra"
+        val PDF_ANNOTATIONS_EXTRA = "org.nyple.pdfRenderer.annotations_extra"
     }
 }
 
 @Parcelize
 data class PDFBookmark(val pageNumber: Int): Parcelable
 
-data class PDFAnnotation(val page: Int, val boundingRect: List<Int>, val text: String)
+@Parcelize
+data class PDFAnnotation(val pageNumber: Int, val boundingRect: List<Int>, val text: String) : Parcelable

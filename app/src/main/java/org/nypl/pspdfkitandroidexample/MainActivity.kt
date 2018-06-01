@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
+import org.nypl.pdfrendererprovider.PDFAnnotation
 import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster
@@ -42,6 +43,10 @@ class MainActivity : AppCompatActivity() {
         LocalBroadcastManager
                 .getInstance(this)
                 .registerReceiver(bookmarksChangedMessageReceiver, IntentFilter(PDFBroadcaster.BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME))
+
+        LocalBroadcastManager
+                .getInstance(this)
+                .registerReceiver(annotationsChangedMessageReceiver, IntentFilter(PDFBroadcaster.ANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME))
     }
 
     // https://stackoverflow.com/a/45399437
@@ -85,6 +90,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val annotationsChangedMessageReceiver  = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent != null) {
+                var idExtra = intent.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
+                var annotationsExtra = intent.getParcelableArrayListExtra<PDFAnnotation>(PDFConstants.PDF_ANNOTATIONS_EXTRA)
+
+                if (idExtra >= 0) {
+                    for (book in booksList) {
+                        if (book.bookId == idExtra) {
+                            book.annotations = convertAnnotationsToAppAnnotations(annotationsExtra)
+                            break
+                        }
+                    }
+                }
+
+                adapter.notifyDataSetChanged()
+            }
+        }
+    }
+
     private fun convertBookmarksToAppBookmark(bookmarksExtra: java.util.ArrayList<PDFBookmark>?): Set<AppBookmark> {
         var appBookmarks : MutableSet<AppBookmark> = hashSetOf()
         if (bookmarksExtra != null) {
@@ -95,6 +120,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         return appBookmarks
+    }
+
+    private fun convertAnnotationsToAppAnnotations(annotationsExtra: java.util.ArrayList<PDFAnnotation>?): Set<AppAnnotation> {
+        var appAnnotations : MutableSet<AppAnnotation> = hashSetOf()
+        if (annotationsExtra != null) {
+            for (annotation in annotationsExtra.iterator())
+            {
+                appAnnotations.add(AppAnnotation(annotation.pageNumber, annotation.boundingRect, annotation.text))
+            }
+        }
+
+        return appAnnotations
     }
 
     override fun onStart() {
@@ -109,9 +146,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun populateBooks() {
         var book1Bookmarks : MutableSet<AppBookmark> = hashSetOf(AppBookmark(1), AppBookmark(3), AppBookmark(35))
-        var book1 = Book(1, "Financial Accounting", book1Bookmarks, 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
+        var book1 = Book(1, "Financial Accounting", book1Bookmarks, kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
-        var book2 = Book(2, "Alice in Wonderland", kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
+        var book2 = Book(2, "Alice in Wonderland", kotlin.collections.emptySet(), kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)
     }
 }
