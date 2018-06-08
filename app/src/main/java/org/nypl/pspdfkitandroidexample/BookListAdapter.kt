@@ -60,6 +60,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             view.bookTitle.text = book?.title
             view.lastPageRead.text = "Last Page Read: " + book?.lastPageRead.toString()
             view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
+            view.annotationCount.text = "Annotations Saved: " + book?.annotations?.size.toString()
         }
 
         private fun startPdfActivity(context: Context, bookId: Int, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>, annotations: Set<AppAnnotation>) {
