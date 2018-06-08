@@ -14,12 +14,22 @@ class Book {
     var resourceUri: Uri
     var lastPageRead: Int = 0
 
-    constructor(bookId: Int, title: String, bookmarks: Set<AppBookmark>, annotations: Set<AppAnnotation>, lastPageRead: Int, resourceUri: Uri) {
+    constructor(bookId: Int, title: String, bookmarks: Set<AppBookmark>?, annotations: Set<AppAnnotation>?, lastPageRead: Int, resourceUri: Uri) {
         this.bookId = bookId
         this.title = title
-        this.bookmarks = bookmarks
-        this.annotations = annotations
         this.lastPageRead = lastPageRead
         this.resourceUri = resourceUri
+
+        if (bookmarks == null) {
+            this.bookmarks = kotlin.collections.emptySet()
+        } else {
+            this.bookmarks = bookmarks
+        }
+
+        if (annotations == null) {
+            this.annotations = kotlin.collections.emptySet()
+        } else {
+            this.annotations = annotations
+        }
     }
 }

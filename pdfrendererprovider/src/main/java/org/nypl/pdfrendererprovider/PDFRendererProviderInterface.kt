@@ -18,7 +18,10 @@ interface PDFRendererProviderInterface {
     var notes: List<PDFAnnotation>?
 
     fun buildPDFRendererIntent(assetFile: Uri,
+                               bookId: Int,
                                lastRead: Int,
+                               bookmarks: ArrayList<PDFBookmark>? = null,
+                               annotations: ArrayList<PDFAnnotation>? = null,
                                context: Context): Intent
 }
 
@@ -35,12 +38,12 @@ class PDFConstants {
         val PDF_URI_EXTRA = "org.nypl.pdfRenderer.uri_extra"
         val PDF_PAGE_READ_EXTRA = "org.nypl.pdfRenderer.page_read_extra"
         val PDF_BOOKMARKS_EXTRA = "org.nypl.pdfRenderer.bookmarks_extra"
-        val PDF_ANNOTATIONS_EXTRA = "org.nyple.pdfRenderer.annotations_extra"
+        val PDF_ANNOTATIONS_EXTRA = "org.nypl.pdfRenderer.annotations_extra"
     }
 }
 
 @Parcelize
-data class PDFBookmark(val pageNumber: Int): Parcelable
+data class PDFBookmark(val pageNumber: Int) : Parcelable
 
 @Parcelize
-data class PDFAnnotation(val pageNumber: Int, val boundingRect: List<Int>, val text: String) : Parcelable
+data class PDFAnnotation(val pageNumber: Int, val boundingRect: List<Int> = emptyList(), val text: String = "") : Parcelable

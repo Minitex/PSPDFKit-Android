@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val bookmarksChangedMessageReceiver  = object : BroadcastReceiver() {
+    private val bookmarksChangedMessageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent != null) {
                 var idExtra = intent.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val annotationsChangedMessageReceiver  = object : BroadcastReceiver() {
+    private val annotationsChangedMessageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent != null) {
                 var idExtra = intent.getIntExtra(PDFConstants.PDF_ID_EXTRA, -1)
@@ -111,10 +111,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun convertBookmarksToAppBookmark(bookmarksExtra: java.util.ArrayList<PDFBookmark>?): Set<AppBookmark> {
-        var appBookmarks : MutableSet<AppBookmark> = hashSetOf()
+        var appBookmarks: MutableSet<AppBookmark> = hashSetOf()
         if (bookmarksExtra != null) {
-            for (bookmark in bookmarksExtra.iterator())
-            {
+            for (bookmark in bookmarksExtra.iterator()) {
                 appBookmarks.add(AppBookmark(bookmark.pageNumber))
             }
         }
@@ -123,10 +122,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun convertAnnotationsToAppAnnotations(annotationsExtra: java.util.ArrayList<PDFAnnotation>?): Set<AppAnnotation> {
-        var appAnnotations : MutableSet<AppAnnotation> = hashSetOf()
+        var appAnnotations: MutableSet<AppAnnotation> = hashSetOf()
         if (annotationsExtra != null) {
-            for (annotation in annotationsExtra.iterator())
-            {
+            for (annotation in annotationsExtra.iterator()) {
                 appAnnotations.add(AppAnnotation(annotation.pageNumber, annotation.boundingRect, annotation.text))
             }
         }
@@ -145,10 +143,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun populateBooks() {
-        var book1Bookmarks : MutableSet<AppBookmark> = hashSetOf(AppBookmark(1), AppBookmark(3), AppBookmark(35))
-        var book1 = Book(1, "Financial Accounting", book1Bookmarks, kotlin.collections.emptySet(), 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
+        var book1Bookmarks: MutableSet<AppBookmark> = hashSetOf(AppBookmark(1), AppBookmark(3), AppBookmark(35))
+        var book1 = Book(1, "Financial Accounting", book1Bookmarks, null, 19, Uri.parse("file:///android_asset/FinancialAccounting.pdf"))
         booksList.add(book1)
-        var book2 = Book(2, "Alice in Wonderland", kotlin.collections.emptySet(), kotlin.collections.emptySet(), 1, Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
+
+        var book2 = Book(
+                bookId = 2,
+                title = "Alice in Wonderland",
+                bookmarks = null,
+                annotations = null,
+                lastPageRead = 1,
+                resourceUri = Uri.parse("file:///android_asset/aliceInWonderland.pdf"))
         booksList.add(book2)
     }
 }
