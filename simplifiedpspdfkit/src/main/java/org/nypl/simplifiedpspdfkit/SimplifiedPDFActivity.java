@@ -1,34 +1,25 @@
 package org.nypl.simplifiedpspdfkit;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.pspdfkit.PSPDFKit;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
-import com.pspdfkit.configuration.activity.PdfActivityConfiguration;
 import com.pspdfkit.document.PdfDocument;
-import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
-import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
-import org.jetbrains.annotations.NotNull;
-import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
-import org.nypl.pdfrendererprovider.PDFRendererListener;
-import org.nypl.pdfrendererprovider.PDFRendererProviderInterface;
+import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +36,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     private static int[] bookmarksToCreate;
     private static int documentId;
     private Menu menu;
-    private PdfDocument document;
     private BookmarkProvider bookmarkProvider;
 
     @Override
@@ -65,35 +55,12 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             if (documentId >= 0) {
                 this.documentId = documentId;
             }
+
+            ArrayList<PDFBookmark> bookmarksExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA());
+            if (bookmarksExtra != null && bookmarksExtra.size() > 0) {
+                bookmarksToCreate = pdfBookmarkToIntArray(bookmarksExtra);
+            }
         }
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
-    }
-
-    @Override
-    public void onBackPressed() {
-        //create an intent with any data you want the host to get, and add that to "setResult()" method
-//        Intent returnIntent = new Intent();
-//        String uri = document.getUid();
-//        int pageRead = getPageIndex();
-//        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
-//        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
-//        setResult(RESULT_OK, returnIntent);
-
-        super.onBackPressed();
-    }
-
-    @Override
-    public void finish() {
-        Intent returnIntent = new Intent();
-        int pageRead = getPageIndex();
-        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
-        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
-        setResult(RESULT_OK, returnIntent);
-        super.finish();
     }
 
     @Override
@@ -105,7 +72,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     public void onDocumentLoaded(@NonNull PdfDocument document) {
         super.onDocumentLoaded(document);
 
-        this.document = getDocument();
         this.bookmarkProvider = document.getBookmarkProvider();
 
         if (bookmarksToCreate != null && bookmarksToCreate.length > 0) {
@@ -116,7 +82,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                 if (!containsBookmarkForPage(currentBookmarks, bookmarkPage)) {
                     if (bookmarkPage > 0) {
                         this.bookmarkProvider.addBookmark(new Bookmark(bookmarkPage));
-                        break;
                     }
                 }
             }
@@ -127,6 +92,22 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     public void onPageChanged(@NonNull PdfDocument document, int pageIndex) {
         super.onPageChanged(document, pageIndex);
         setBookmarkIcon(pageIndex);
+        sendPageChangedMessage(pageIndex);
+    }
+
+    private void sendPageChangedMessage(int pageIndex) {
+        Intent intent = new Intent(PDFBroadcaster.Companion.getPAGE_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageIndex);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void sendBookmarksChangedMessage() {
+        ArrayList<PDFBookmark> bookmarks = bookmarksToPDFBookmark(bookmarkProvider.getBookmarks());
+        Intent intent = new Intent(PDFBroadcaster.Companion.getBOOKMARKS_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA(), bookmarks);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     @Override
@@ -141,14 +122,18 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return handled || super.onOptionsItemSelected(item);
     }
 
-    private Set<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
-//        var convertedBookmarks : MutableSet<PDFBookmark> = mutableSetOf()
-//        for (appBookmark in bookmarks){
-//            convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
-//        }
-//
-//        return convertedBookmarks.toSet()
-        Set<PDFBookmark> convertedBookmarks = new HashSet<PDFBookmark>();
+    @Override
+    public void finish() {
+        Intent returnIntent = new Intent();
+        int pageRead = getPageIndex();
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
+        setResult(RESULT_OK, returnIntent);
+        super.finish();
+    }
+
+    private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
+        ArrayList<PDFBookmark> convertedBookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarks) {
             convertedBookmarks.add(new PDFBookmark(bookmark.getPageIndex()));
         }
@@ -175,6 +160,17 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         }
 
         return null;
+    }
+
+    private int[] pdfBookmarkToIntArray(ArrayList<PDFBookmark> bookmarksExtra) {
+        int[] ret = new int[bookmarksExtra.size()];
+        int i = 0;
+        for (PDFBookmark bookmark : bookmarksExtra) {
+            ret[i] = bookmark.getPageNumber();
+            i++;
+        }
+
+        return ret;
     }
 
     private void setBookmarkIcon(int pageIndex) {
@@ -207,29 +203,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
         }
 
+        sendBookmarksChangedMessage();
         setBookmarkIcon(bookmarkPage);
     }
-
-    private int[] bookmarksToIntArray(List<Bookmark> bookmarks) {
-        // https://stackoverflow.com/a/965289/2107568
-        int[] bookmarkArray = new int[bookmarks.size()];
-        int i = 0;
-        for (Bookmark bookmark : bookmarks) {
-            bookmarkArray[i++] = bookmark.getPageIndex();
-        }
-
-        return bookmarkArray;
-    }
-
-    private int[] pdfBookmarkToIntArray(Set<PDFBookmark> set) {
-        int[] ret = new int[set.size()];
-        int i = 0;
-        for (PDFBookmark bookmark : set) {
-            ret[i] = bookmark.getPageNumber();
-            i++;
-        }
-
-        return ret;
-    }
-
 }

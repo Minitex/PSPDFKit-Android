@@ -10,6 +10,7 @@ import com.pspdfkit.ui.PdfActivityIntentBuilder
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException
 import com.pspdfkit.PSPDFKit
+import org.nypl.pdfrendererprovider.PDFConstants
 
 
 class PSPDFKitProvider() : PDFRendererProviderInterface {
@@ -19,8 +20,10 @@ class PSPDFKitProvider() : PDFRendererProviderInterface {
     override var notes: List<PDFAnnotation>? = null
 
     override fun buildPDFRendererIntent(assetFile: Uri,
+                                        bookId: Int,
                                         lastRead: Int,
-                                        bookmarks: Set<PDFBookmark>,
+                                        bookmarks: ArrayList<PDFBookmark>?,
+                                        annotations: ArrayList<PDFAnnotation>?,
                                         context: Context): Intent {
 
         // Set license key
@@ -46,9 +49,20 @@ class PSPDFKitProvider() : PDFRendererProviderInterface {
                 .page(lastRead - 1)
                 .build()
 
-        return PdfActivityIntentBuilder.fromUri(context, assetFile)
+        val intent =  PdfActivityIntentBuilder.fromUri(context, assetFile)
                 .configuration(config)
                 .activityClass(SimplifiedPDFActivity::class.java)
                 .build()
+
+        intent.putExtra(PDFConstants.PDF_ID_EXTRA, bookId)
+        if (bookmarks != null) {
+            intent.putExtra(PDFConstants.PDF_BOOKMARKS_EXTRA, bookmarks)
+        }
+
+        if (annotations != null) {
+            intent.putExtra(PDFConstants.PDF_ANNOTATIONS_EXTRA, annotations)
+        }
+
+        return intent
     }
 }

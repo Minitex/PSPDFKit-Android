@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
+import org.nypl.pdfrendererprovider.PDFAnnotation
 import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
@@ -44,7 +45,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             val context = itemView.context
             if (book != null) {
                 Toast.makeText(context, itemView.bookTitle.text, Toast.LENGTH_SHORT).show()
-                startPdfActivity(context, book!!.bookId, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks)
+                startPdfActivity(context, book!!.bookId, book!!.resourceUri, book!!.lastPageRead, book!!.bookmarks, book!!.annotations)
             } else {
                 Toast.makeText(context, "No book set", Toast.LENGTH_SHORT).show()
             }
@@ -59,42 +60,53 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
             view.bookTitle.text = book?.title
             view.lastPageRead.text = "Last Page Read: " + book?.lastPageRead.toString()
             view.bookmarkCount.text = "Bookmarks Saved: " + book?.bookmarks?.size.toString()
+            view.annotationCount.text = "Annotations Saved: " + book?.annotations?.size.toString()
         }
 
-        private fun startPdfActivity(context: Context, bookId: Int, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>) {
+        private fun startPdfActivity(context: Context, bookId: Int, assetFile: Uri, lastRead: Int, bookmarks: Set<AppBookmark>, annotations: Set<AppAnnotation>) {
 
             val classString = "org.nypl.simplifiedpspdfkit.PSPDFKitProvider"
             val kclass = Class.forName(classString).kotlin
             val renderer = kclass.createInstance() as PDFRendererProviderInterface
 
             val intent = renderer.buildPDFRendererIntent(
-                    assetFile,
-                    lastRead,
-                    convertToRendererBookmarks(bookmarks),
-                    context
+                    assetFile = assetFile,
+                    bookId = bookId,
+                    lastRead = lastRead,
+                    bookmarks = convertToRendererBookmarks(bookmarks),
+                    annotations = convertToRendererAnnotations(annotations),
+                    context = context
             )
 
-            intent.putExtra(PDFConstants.PDF_ID_EXTRA, bookId)
+
 
             (context as MainActivity).startActivityForResult(intent, 1)
         }
 
-        private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>): Set<PDFBookmark> {
-            var convertedBookmarks: MutableSet<PDFBookmark> = mutableSetOf()
+        private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>?): ArrayList<PDFBookmark>? {
+            if (bookmarks == null || bookmarks.isEmpty()){
+                return null
+            }
+
+            val convertedBookmarks = arrayListOf<PDFBookmark>()
             for (appBookmark in bookmarks) {
                 convertedBookmarks.add(PDFBookmark(appBookmark.pageNumber))
             }
 
-            return convertedBookmarks.toSet()
+            return convertedBookmarks
         }
 
-        private fun convertToAppBookmarks(bookmarks: Set<PDFBookmark>): Set<AppBookmark> {
-            var convertedBookmarks: MutableSet<AppBookmark> = mutableSetOf()
-            for (appBookmark in bookmarks) {
-                convertedBookmarks.add(AppBookmark(appBookmark.pageNumber))
+        private fun convertToRendererAnnotations(annotations: Set<AppAnnotation>?): ArrayList<PDFAnnotation>? {
+            if (annotations == null || annotations.isEmpty()){
+                return null
             }
 
-            return convertedBookmarks.toSet()
+            val convertedAnnotations = arrayListOf<PDFAnnotation>()
+            for (appAnnotation in annotations) {
+                convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber))
+            }
+
+            return convertedAnnotations
         }
     }
 }
