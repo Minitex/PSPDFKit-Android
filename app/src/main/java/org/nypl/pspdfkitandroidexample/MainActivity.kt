@@ -35,18 +35,11 @@ class MainActivity : AppCompatActivity() {
         adapter = BookListAdapter(booksList)
         rv_book_list.adapter = adapter
 
-        // Broadcast listeners
-        LocalBroadcastManager
-                .getInstance(this)
-                .registerReceiver(pageChangedMessageReceiver, IntentFilter(PDFBroadcaster.PAGE_CHANGED_BROADCAST_EVENT_NAME))
-
-        LocalBroadcastManager
-                .getInstance(this)
-                .registerReceiver(bookmarksChangedMessageReceiver, IntentFilter(PDFBroadcaster.BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME))
-
-        LocalBroadcastManager
-                .getInstance(this)
-                .registerReceiver(annotationsChangedMessageReceiver, IntentFilter(PDFBroadcaster.ANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME))
+        with(LocalBroadcastManager.getInstance(this)) {
+            registerReceiver(pageChangedMessageReceiver, IntentFilter(PDFBroadcaster.PAGE_CHANGED_BROADCAST_EVENT_NAME))
+            registerReceiver(bookmarksChangedMessageReceiver, IntentFilter(PDFBroadcaster.BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME))
+            registerReceiver(annotationsChangedMessageReceiver, IntentFilter(PDFBroadcaster.ANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME))
+        }
     }
 
     // https://stackoverflow.com/a/45399437
