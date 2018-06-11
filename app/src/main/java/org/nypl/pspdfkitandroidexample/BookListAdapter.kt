@@ -80,7 +80,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
 
 
-            (context as MainActivity).startActivity(intent)
+            (context as MainActivity).startActivityForResult(intent, 1)
         }
 
         private fun convertToRendererBookmarks(bookmarks: Set<AppBookmark>?): ArrayList<PDFBookmark>? {

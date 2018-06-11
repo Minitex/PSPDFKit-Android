@@ -122,6 +122,16 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return handled || super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void finish() {
+        Intent returnIntent = new Intent();
+        int pageRead = getPageIndex();
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
+        setResult(RESULT_OK, returnIntent);
+        super.finish();
+    }
+
     private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
         ArrayList<PDFBookmark> convertedBookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarks) {
