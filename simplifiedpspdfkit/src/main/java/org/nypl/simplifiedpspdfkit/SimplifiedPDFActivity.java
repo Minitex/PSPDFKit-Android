@@ -9,12 +9,16 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.pspdfkit.annotations.Annotation;
+import com.pspdfkit.annotations.AnnotationProvider;
+import com.pspdfkit.annotations.AssetAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
 
+import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
@@ -34,9 +38,11 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private static int[] bookmarksToCreate;
+    private static int[] annotationsToCreate;
     private static int documentId;
     private Menu menu;
     private BookmarkProvider bookmarkProvider;
+    private AnnotationProvider annotationProvider;
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -60,6 +66,11 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             if (bookmarksExtra != null && bookmarksExtra.size() > 0) {
                 bookmarksToCreate = pdfBookmarkToIntArray(bookmarksExtra);
             }
+
+            ArrayList<PDFAnnotation> annotationsExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA());
+            if (annotationsExtra != null && annotationsExtra.size() > 0){
+                annotationsToCreate = pdfAnnotationToPSPDFAnnotation(annotationsExtra);
+            }
         }
     }
 
@@ -73,6 +84,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         super.onDocumentLoaded(document);
 
         this.bookmarkProvider = document.getBookmarkProvider();
+        this.annotationProvider = document.getAnnotationProvider();
 
         if (bookmarksToCreate != null && bookmarksToCreate.length > 0) {
             List<Bookmark> currentBookmarks = this.bookmarkProvider.getBookmarks();
@@ -85,6 +97,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                     }
                 }
             }
+        }
+
+        if (annotationsToCreate != null && annotationsToCreate.length > 0){
+           // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
         }
     }
 
@@ -150,6 +166,17 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         }
 
         return null;
+    }
+
+    private int[] pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
+        int[] ret = new int[annotationsExtra.size()];
+        int i = 0;
+        for (PDFAnnotation annotation : annotationsExtra) {
+            ret[i] = annotation.getPageNumber();
+            i++;
+        }
+
+        return ret;
     }
 
     private int[] pdfBookmarkToIntArray(ArrayList<PDFBookmark> bookmarksExtra) {
