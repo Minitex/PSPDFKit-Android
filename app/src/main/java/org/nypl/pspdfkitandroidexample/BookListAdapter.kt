@@ -103,7 +103,7 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
             val convertedAnnotations = arrayListOf<PDFAnnotation>()
             for (appAnnotation in annotations) {
-                convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber))
+                convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber, appAnnotation.boundingRect, ""))
             }
 
             return convertedAnnotations

@@ -6,11 +6,13 @@ import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
+import com.pspdfkit.annotations.AnnotationType;
 import com.pspdfkit.annotations.AssetAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
@@ -23,10 +25,16 @@ import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 /**
  * Created by Matt on 3/2/2018.
@@ -36,6 +44,8 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     public SimplifiedPDFActivity() {
     }
+
+    private static final String TAG = SimplifiedPDFActivity.class.getName();
 
     private static int[] bookmarksToCreate;
     private static int[] annotationsToCreate;
@@ -68,7 +78,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
 
             ArrayList<PDFAnnotation> annotationsExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA());
-            if (annotationsExtra != null && annotationsExtra.size() > 0){
+            if (annotationsExtra != null && annotationsExtra.size() > 0) {
                 annotationsToCreate = pdfAnnotationToPSPDFAnnotation(annotationsExtra);
             }
         }
@@ -86,6 +96,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         this.bookmarkProvider = document.getBookmarkProvider();
         this.annotationProvider = document.getAnnotationProvider();
 
+
         if (bookmarksToCreate != null && bookmarksToCreate.length > 0) {
             List<Bookmark> currentBookmarks = this.bookmarkProvider.getBookmarks();
 
@@ -98,6 +109,25 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                 }
             }
         }
+        document.getAnnotationProvider().addOnAnnotationUpdatedListener(new AnnotationProvider.OnAnnotationUpdatedListener() {
+            @Override
+            public void onAnnotationCreated(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was created.");
+                sendAnnotationsChangedMessage();
+            }
+
+            @Override
+            public void onAnnotationUpdated(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was updated.");
+                sendAnnotationsChangedMessage();
+            }
+
+            @Override
+            public void onAnnotationRemoved(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was removed.");
+                sendAnnotationsChangedMessage();
+            }
+        });
 
         if (annotationsToCreate != null && annotationsToCreate.length > 0){
            // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
@@ -126,6 +156,39 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    private void sendAnnotationsChangedMessage() {
+//        ArrayList<PDFAnnotation> annotations =
+//                annotationsToPDFAnnotation(annotationProvider.getAllAnnotationsOfType(EnumSet.allOf(AnnotationType.class)).toList().blockingGet());
+
+        // Observable conversion example: https://pspdfkit.com/guides/android/current/annotations/introduction-to-annotations/
+        final Observable<Annotation> annotationObservable = annotationProvider.getAllAnnotationsOfType(EnumSet.allOf(AnnotationType.class));
+
+        // This will asynchronously read all annotations, cast them and return them as a List.
+        annotationObservable
+                .cast(Annotation.class)
+                .toList() // Collect all annotations into a List.
+                .observeOn(AndroidSchedulers.mainThread()) // Receive all annotations on the main thread.
+                .subscribe(new Consumer<List<Annotation>>() {
+                    @Override public void accept(List<Annotation> noteAnnotations) {
+                        // This is called on the main thread.
+                        doSomething(noteAnnotations);
+                    }
+                });
+
+//        Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
+//        intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotations);
+//        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+//        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void doSomething(List<Annotation> annotations) {
+        Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotationsToPDFAnnotation(annotations));
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         boolean handled = false;
@@ -146,6 +209,15 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
         setResult(RESULT_OK, returnIntent);
         super.finish();
+    }
+
+    private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<Annotation> annotations) {
+        ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
+        for(Annotation annotation : annotations){
+            convertedAnnotations.add(new PDFAnnotation(annotation.getPageIndex(), annotation.getBoundingBox(), ""));
+        }
+
+        return convertedAnnotations;
     }
 
     private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
