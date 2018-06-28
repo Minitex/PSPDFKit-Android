@@ -14,6 +14,7 @@ import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
 import com.pspdfkit.annotations.AnnotationType;
 import com.pspdfkit.annotations.AssetAnnotation;
+import com.pspdfkit.annotations.TextMarkupAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.document.PdfDocument;
@@ -161,15 +162,15 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 //                annotationsToPDFAnnotation(annotationProvider.getAllAnnotationsOfType(EnumSet.allOf(AnnotationType.class)).toList().blockingGet());
 
         // Observable conversion example: https://pspdfkit.com/guides/android/current/annotations/introduction-to-annotations/
-        final Observable<Annotation> annotationObservable = annotationProvider.getAllAnnotationsOfType(EnumSet.allOf(AnnotationType.class));
+        final Observable<Annotation> annotationObservable = annotationProvider.getAllAnnotationsOfType(EnumSet.of(AnnotationType.HIGHLIGHT, AnnotationType.UNDERLINE));
 
         // This will asynchronously read all annotations, cast them and return them as a List.
         annotationObservable
-                .cast(Annotation.class)
+                .cast(TextMarkupAnnotation.class)
                 .toList() // Collect all annotations into a List.
                 .observeOn(AndroidSchedulers.mainThread()) // Receive all annotations on the main thread.
-                .subscribe(new Consumer<List<Annotation>>() {
-                    @Override public void accept(List<Annotation> noteAnnotations) {
+                .subscribe(new Consumer<List<TextMarkupAnnotation>>() {
+                    @Override public void accept(List<TextMarkupAnnotation> noteAnnotations) {
                         // This is called on the main thread.
                         doSomething(noteAnnotations);
                     }
@@ -181,7 +182,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 //        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void doSomething(List<Annotation> annotations) {
+    private void doSomething(List<TextMarkupAnnotation> annotations) {
         Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
         intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotationsToPDFAnnotation(annotations));
         intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
@@ -211,7 +212,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         super.finish();
     }
 
-    private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<Annotation> annotations) {
+    private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<TextMarkupAnnotation> annotations) {
         ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
         for(Annotation annotation : annotations){
             convertedAnnotations.add(new PDFAnnotation(annotation.getPageIndex(), annotation.getBoundingBox(), ""));
