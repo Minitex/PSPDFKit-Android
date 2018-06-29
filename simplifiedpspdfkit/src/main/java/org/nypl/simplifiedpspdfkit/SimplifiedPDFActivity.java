@@ -1,6 +1,7 @@
 package org.nypl.simplifiedpspdfkit;
 
 import android.content.Intent;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
@@ -21,6 +22,7 @@ import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
 
+import org.nypl.pdfrendererprovider.FloatRect;
 import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
@@ -28,6 +30,7 @@ import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -130,8 +133,8 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
         });
 
-        if (annotationsToCreate != null && annotationsToCreate.length > 0){
-           // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
+        if (annotationsToCreate != null && annotationsToCreate.length > 0) {
+            // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
         }
     }
 
@@ -170,7 +173,8 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                 .toList() // Collect all annotations into a List.
                 .observeOn(AndroidSchedulers.mainThread()) // Receive all annotations on the main thread.
                 .subscribe(new Consumer<List<TextMarkupAnnotation>>() {
-                    @Override public void accept(List<TextMarkupAnnotation> noteAnnotations) {
+                    @Override
+                    public void accept(List<TextMarkupAnnotation> noteAnnotations) {
                         // This is called on the main thread.
                         doSomething(noteAnnotations);
                     }
@@ -214,8 +218,27 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
     private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<TextMarkupAnnotation> annotations) {
         ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
-        for(Annotation annotation : annotations){
-            convertedAnnotations.add(new PDFAnnotation(annotation.getPageIndex(), annotation.getBoundingBox(), ""));
+        for (TextMarkupAnnotation annotation : annotations) {
+            RectF boundingBox = annotation.getBoundingBox();
+            Log.w(TAG, boundingBox.toString());
+            Log.w(TAG, boundingBox.toShortString());
+            List<RectF> rects = annotation.getRects();
+
+            ArrayList<FloatRect> convertedRects = new ArrayList<>(rects.size());
+            for (RectF rect : rects) {
+                convertedRects.add(new FloatRect(rect.bottom, rect.left, rect.right, rect.top));
+            }
+
+            convertedAnnotations.add(
+                    new PDFAnnotation(
+                            annotation.getPageIndex(),
+                            annotation.getType().toString(),
+                            new FloatRect(boundingBox.bottom, boundingBox.left, boundingBox.right, boundingBox.top),
+                            convertedRects,
+                            String.valueOf(annotation.getColor()),
+                            String.valueOf(annotation.getAlpha())
+                    )
+            );
         }
 
         return convertedAnnotations;
