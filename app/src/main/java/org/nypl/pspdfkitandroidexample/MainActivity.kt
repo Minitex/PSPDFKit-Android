@@ -54,7 +54,8 @@ class MainActivity : AppCompatActivity() {
                 if (idExtra >= 0) {
                     for (book in booksList) {
                         if (book.bookId == idExtra) {
-                            book.lastPageRead = pageExtra
+                            // Passes back the page index, which is zero-based
+                            book.lastPageRead = pageExtra + 1
                             break
                         }
                     }
@@ -169,7 +170,8 @@ class MainActivity : AppCompatActivity() {
                 if (bookId >= 0) {
                     for (book in booksList) {
                         if (book.bookId == bookId) {
-                            book.lastPageRead = lastPage
+                            // Passes back the page index, which is zero-based
+                            book.lastPageRead = lastPage + 1
                             break
                         }
                     }
