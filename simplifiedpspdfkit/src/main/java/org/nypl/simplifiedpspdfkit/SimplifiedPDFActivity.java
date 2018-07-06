@@ -43,6 +43,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private static final String TAG = SimplifiedPDFActivity.class.getName();
+    private static final Gson GSON = new Gson();
 
     private static int[] bookmarksToCreate;
     private static int[] annotationsToCreate;
@@ -205,7 +206,6 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<TextMarkupAnnotation> annotations) {
-        Gson gson = new Gson();
         ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
         for (TextMarkupAnnotation annotation : annotations) {
             RectF boundingBox = annotation.getBoundingBox();
@@ -215,14 +215,14 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
 
             ArrayList<String> convertedRects = new ArrayList<>(rects.size());
             for (RectF rect : rects) {
-                convertedRects.add(gson.toJson(rect));
+                convertedRects.add(GSON.toJson(rect));
             }
 
             convertedAnnotations.add(
                     new PDFAnnotation(
                             annotation.getPageIndex(),
                             annotation.getType().toString(),
-                            gson.toJson(boundingBox),
+                            GSON.toJson(boundingBox),
                             convertedRects,
                             String.valueOf(annotation.getColor()),
                             String.valueOf(annotation.getAlpha())
