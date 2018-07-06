@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.gson.Gson;
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
 import com.pspdfkit.annotations.AnnotationType;
@@ -19,7 +20,6 @@ import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
 
-import org.nypl.pdfrendererprovider.FloatRect;
 import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
@@ -205,6 +205,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<TextMarkupAnnotation> annotations) {
+        Gson gson = new Gson();
         ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
         for (TextMarkupAnnotation annotation : annotations) {
             RectF boundingBox = annotation.getBoundingBox();
@@ -212,16 +213,16 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             Log.w(TAG, boundingBox.toShortString());
             List<RectF> rects = annotation.getRects();
 
-            ArrayList<FloatRect> convertedRects = new ArrayList<>(rects.size());
+            ArrayList<String> convertedRects = new ArrayList<>(rects.size());
             for (RectF rect : rects) {
-                convertedRects.add(new FloatRect(rect.bottom, rect.left, rect.right, rect.top));
+                convertedRects.add(gson.toJson(rect));
             }
 
             convertedAnnotations.add(
                     new PDFAnnotation(
                             annotation.getPageIndex(),
                             annotation.getType().toString(),
-                            new FloatRect(boundingBox.bottom, boundingBox.left, boundingBox.right, boundingBox.top),
+                            gson.toJson(boundingBox),
                             convertedRects,
                             String.valueOf(annotation.getColor()),
                             String.valueOf(annotation.getAlpha())

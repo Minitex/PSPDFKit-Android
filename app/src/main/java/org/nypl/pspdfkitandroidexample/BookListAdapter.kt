@@ -100,15 +100,8 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
             val convertedAnnotations = arrayListOf<PDFAnnotation>()
             for (appAnnotation in annotations) {
-                val convertedRects = mutableListOf<FloatRect>()
-
-                for (rect in appAnnotation.rects){
-                    convertedRects.add(FloatRect(rect))
-                }
-
-
                 convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber, appAnnotation.annotationType,
-                        FloatRect(appAnnotation.boundingRect), convertedRects.toTypedArray() as ArrayList<FloatRect>, appAnnotation.color, appAnnotation.opacity))
+                        appAnnotation.boundingRect, appAnnotation.rects, appAnnotation.color, appAnnotation.opacity))
             }
 
             return convertedAnnotations
