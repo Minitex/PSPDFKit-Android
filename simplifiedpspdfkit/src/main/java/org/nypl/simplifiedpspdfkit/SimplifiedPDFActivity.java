@@ -13,7 +13,9 @@ import com.google.gson.Gson;
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
 import com.pspdfkit.annotations.AnnotationType;
+import com.pspdfkit.annotations.HighlightAnnotation;
 import com.pspdfkit.annotations.TextMarkupAnnotation;
+import com.pspdfkit.annotations.UnderlineAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.document.PdfDocument;
@@ -46,7 +48,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     private static final Gson GSON = new Gson();
 
     private static int[] bookmarksToCreate;
-    private static int[] annotationsToCreate;
+    private static List<Annotation> annotationsToCreate;
     private static int documentId;
     private Menu menu;
     private BookmarkProvider bookmarkProvider;
@@ -127,8 +129,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
         });
 
-        if (annotationsToCreate != null && annotationsToCreate.length > 0) {
-            // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
+        if (annotationsToCreate != null && annotationsToCreate.size() > 0) {
+            for (Annotation annotation : annotationsToCreate) {
+                this.annotationProvider.addAnnotationToPage(annotation);
+            }
         }
     }
 
@@ -263,12 +267,25 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return null;
     }
 
-    private int[] pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
-        int[] ret = new int[annotationsExtra.size()];
-        int i = 0;
+    private List<Annotation> pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
+        List<Annotation> ret = new ArrayList<>();
+
         for (PDFAnnotation annotation : annotationsExtra) {
-            ret[i] = annotation.getPageNumber();
-            i++;
+            List<RectF> convertedRects = new ArrayList<>();
+            for (String rectJson : annotation.getRects()) {
+                RectF convertedRect = GSON.fromJson(rectJson, RectF.class);
+                convertedRects.add(convertedRect);
+            }
+
+            switch (annotation.getAnnotationType()) {
+                case "HIGHLIGHT":
+                    ret.add(new HighlightAnnotation(annotation.getPageNumber(), convertedRects));
+                    break;
+                case "UNDERLINE":
+                    ret.add(new UnderlineAnnotation(annotation.getPageNumber(), convertedRects));
+                default:
+                    break;
+            }
         }
 
         return ret;
