@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -118,7 +120,14 @@ class MainActivity : AppCompatActivity() {
         var appAnnotations: MutableSet<AppAnnotation> = hashSetOf()
         if (annotationsExtra != null) {
             for (annotation in annotationsExtra.iterator()) {
-                appAnnotations.add(AppAnnotation(annotation.pageNumber, annotation.boundingRect, annotation.text))
+                appAnnotations.add(
+                        AppAnnotation(
+                                annotation.pageNumber,
+                                annotation.annotationType,
+                                annotation.boundingRect,
+                                annotation.rects,
+                                annotation.color,
+                                annotation.opacity))
             }
         }
 

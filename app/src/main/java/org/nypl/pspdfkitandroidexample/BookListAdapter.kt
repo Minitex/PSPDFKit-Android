@@ -7,10 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import kotlinx.android.synthetic.main.book_list_item_row.view.*
-import org.nypl.pdfrendererprovider.PDFAnnotation
-import org.nypl.pdfrendererprovider.PDFBookmark
-import org.nypl.pdfrendererprovider.PDFConstants
-import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
+import org.nypl.pdfrendererprovider.*
 import kotlin.reflect.full.createInstance
 
 /**
@@ -103,7 +100,8 @@ class BookListAdapter(private val books: ArrayList<Book>) : RecyclerView.Adapter
 
             val convertedAnnotations = arrayListOf<PDFAnnotation>()
             for (appAnnotation in annotations) {
-                convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber))
+                convertedAnnotations.add(PDFAnnotation(appAnnotation.pageNumber, appAnnotation.annotationType,
+                        appAnnotation.boundingRect, appAnnotation.rects, appAnnotation.color, appAnnotation.opacity))
             }
 
             return convertedAnnotations

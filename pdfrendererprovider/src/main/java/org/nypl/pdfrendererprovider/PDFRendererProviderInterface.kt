@@ -2,6 +2,7 @@ package org.nypl.pdfrendererprovider
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.RectF
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
@@ -46,4 +47,11 @@ class PDFConstants {
 data class PDFBookmark(val pageNumber: Int) : Parcelable
 
 @Parcelize
-data class PDFAnnotation(val pageNumber: Int, val boundingRect: List<Int> = emptyList(), val text: String = "") : Parcelable
+data class PDFAnnotation(
+        val pageNumber: Int,
+        val annotationType: String,
+        val boundingRect: String,
+        val rects: ArrayList<String>,
+        val color: String?,
+        val opacity: String?
+) : Parcelable

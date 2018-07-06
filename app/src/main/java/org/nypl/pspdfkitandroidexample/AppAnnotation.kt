@@ -1,4 +1,11 @@
 package org.nypl.pspdfkitandroidexample
 
-class AppAnnotation(val pageNumber: Int, val boundingRect: List<Int>, val text: String) {
+import android.graphics.RectF
+
+class AppAnnotation(val pageNumber: Int,
+                    val annotationType: String,
+                    val boundingRect: String,
+                    val rects: ArrayList<String>,
+                    val color: String?,
+                    val opacity: String?) {
 }

@@ -10,6 +10,7 @@ import com.pspdfkit.ui.PdfActivityIntentBuilder
 import com.pspdfkit.configuration.activity.PdfActivityConfiguration
 import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException
 import com.pspdfkit.PSPDFKit
+import com.pspdfkit.annotations.AnnotationType
 import org.nypl.pdfrendererprovider.PDFConstants
 
 
@@ -34,6 +35,8 @@ class PSPDFKitProvider() : PDFRendererProviderInterface {
             System.exit(1)
         }
 
+        val approvedAnnotations = listOf(AnnotationType.HIGHLIGHT, AnnotationType.UNDERLINE)
+
         //This class would take 'lastRead' and 'bookmarks' and convert those
         //into working objects to add to "PSPDFKit's" config object here..
         //in order to get the state of the book back to where it was
@@ -41,8 +44,7 @@ class PSPDFKitProvider() : PDFRendererProviderInterface {
         // Set configuration
         val config = PdfActivityConfiguration.Builder(context)
                 .disableDocumentEditor()
-                .disableAnnotationEditing()
-                .disableAnnotationList()
+                .editableAnnotationTypes(approvedAnnotations)
                 .disableShare()
                 .disablePrinting()
                 .disableFormEditing()
