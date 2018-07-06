@@ -1,95 +1,101 @@
 package org.nypl.simplifiedpspdfkit;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.RectF;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.pspdfkit.PSPDFKit;
+import com.google.gson.Gson;
+import com.pspdfkit.annotations.Annotation;
+import com.pspdfkit.annotations.AnnotationProvider;
+import com.pspdfkit.annotations.AnnotationType;
+import com.pspdfkit.annotations.HighlightAnnotation;
+import com.pspdfkit.annotations.TextMarkupAnnotation;
+import com.pspdfkit.annotations.UnderlineAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
-import com.pspdfkit.configuration.activity.PdfActivityConfiguration;
 import com.pspdfkit.document.PdfDocument;
-import com.pspdfkit.exceptions.PSPDFKitInitializationFailedException;
+import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
-import com.pspdfkit.ui.PdfActivityIntentBuilder;
 
+import org.nypl.pdfrendererprovider.PDFAnnotation;
+import org.nypl.pdfrendererprovider.PDFBookmark;
+import org.nypl.pdfrendererprovider.PDFConstants;
+import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 /**
  * Created by Matt on 3/2/2018.
  */
 
-public final class SimplifiedPDFActivity extends PdfActivity {
+public class SimplifiedPDFActivity extends PdfActivity implements DocumentListener {
 
     public SimplifiedPDFActivity() {
     }
 
+    private static final String TAG = SimplifiedPDFActivity.class.getName();
+    private static final Gson GSON = new Gson();
+
     private static int[] bookmarksToCreate;
+    private static List<Annotation> annotationsToCreate;
+    private static int documentId;
     private Menu menu;
-    private PdfDocument document;
     private BookmarkProvider bookmarkProvider;
-    private static OnBookmarksChangedListener onBookmarksChangedListener;
-    private static OnPageChangedListener onPageChangedListener;
+    private AnnotationProvider annotationProvider;
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.bookmark_menu, menu);
+        getMenuInflater().inflate(org.nypl.simplifiedpspdfkit.R.menu.bookmark_menu, menu);
         this.menu = menu;
         return true;
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        if (intent != null) {
+            int documentId = intent.getIntExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), -1);
+            if (documentId >= 0) {
+                this.documentId = documentId;
+            }
+
+            ArrayList<PDFBookmark> bookmarksExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA());
+            if (bookmarksExtra != null && bookmarksExtra.size() > 0) {
+                bookmarksToCreate = pdfBookmarkToIntArray(bookmarksExtra);
+            }
+
+            ArrayList<PDFAnnotation> annotationsExtra = intent.getParcelableArrayListExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA());
+            if (annotationsExtra != null && annotationsExtra.size() > 0) {
+                annotationsToCreate = pdfAnnotationToPSPDFAnnotation(annotationsExtra);
+            }
+        }
     }
 
-    public static Intent BuildIntent(Uri assetFile, int openToPage, int[] bookmarks, String pspdfkitLicenseKey, Context context, OnPageChangedListener pageChangedListener, OnBookmarksChangedListener bookmarkListener) {
-        // Set license key
-        try {
-            PSPDFKit.initialize(context, pspdfkitLicenseKey);
-        } catch (PSPDFKitInitializationFailedException e) {
-            Log.e(LOG_TAG, "Current device is not compatible with PSPDFKit!");
-        }
-
-        // Set listeners
-        onBookmarksChangedListener = bookmarkListener;
-        onPageChangedListener = pageChangedListener;
-
-        bookmarksToCreate = bookmarks;
-
-        // Set configuration
-        PdfActivityConfiguration config = new PdfActivityConfiguration
-                .Builder(context)
-                .disableDocumentEditor()
-                .disableAnnotationEditing()
-                .disableAnnotationList()
-                .disableShare()
-                .disablePrinting()
-                .disableFormEditing()
-                .page(openToPage - 1)
-                .build();
-
-
-        return PdfActivityIntentBuilder.fromUri(context, assetFile)
-                .configuration(config)
-                .activityClass(SimplifiedPDFActivity.class)
-                .build();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
     public void onDocumentLoaded(@NonNull PdfDocument document) {
         super.onDocumentLoaded(document);
 
-        this.document = getDocument();
         this.bookmarkProvider = document.getBookmarkProvider();
+        this.annotationProvider = document.getAnnotationProvider();
+
 
         if (bookmarksToCreate != null && bookmarksToCreate.length > 0) {
             List<Bookmark> currentBookmarks = this.bookmarkProvider.getBookmarks();
@@ -103,32 +109,143 @@ public final class SimplifiedPDFActivity extends PdfActivity {
                 }
             }
         }
+        document.getAnnotationProvider().addOnAnnotationUpdatedListener(new AnnotationProvider.OnAnnotationUpdatedListener() {
+            @Override
+            public void onAnnotationCreated(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was created.");
+                sendAnnotationsChangedMessage();
+            }
+
+            @Override
+            public void onAnnotationUpdated(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was updated.");
+                sendAnnotationsChangedMessage();
+            }
+
+            @Override
+            public void onAnnotationRemoved(@NonNull Annotation annotation) {
+                Log.i(TAG, "The annotation was removed.");
+                sendAnnotationsChangedMessage();
+            }
+        });
+
+        if (annotationsToCreate != null && annotationsToCreate.size() > 0) {
+            for (Annotation annotation : annotationsToCreate) {
+                this.annotationProvider.addAnnotationToPage(annotation);
+            }
+        }
     }
 
     @Override
     public void onPageChanged(@NonNull PdfDocument document, int pageIndex) {
         super.onPageChanged(document, pageIndex);
         setBookmarkIcon(pageIndex);
-        // pageIndex here is 0 based and used works for setting bookmark, but not last page read
-        if (onPageChangedListener != null) {
-            onPageChangedListener.onEvent(pageIndex + 1);
-        }
+        sendPageChangedMessage(pageIndex);
     }
+
+    private void sendPageChangedMessage(int pageIndex) {
+        Intent intent = new Intent(PDFBroadcaster.Companion.getPAGE_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageIndex);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void sendBookmarksChangedMessage() {
+        ArrayList<PDFBookmark> bookmarks = bookmarksToPDFBookmark(bookmarkProvider.getBookmarks());
+        Intent intent = new Intent(PDFBroadcaster.Companion.getBOOKMARKS_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_BOOKMARKS_EXTRA(), bookmarks);
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    private void sendAnnotationsChangedMessage() {
+//        ArrayList<PDFAnnotation> annotations =
+//                annotationsToPDFAnnotation(annotationProvider.getAllAnnotationsOfType(EnumSet.allOf(AnnotationType.class)).toList().blockingGet());
+
+        // Observable conversion example: https://pspdfkit.com/guides/android/current/annotations/introduction-to-annotations/
+        final Observable<Annotation> annotationObservable = annotationProvider.getAllAnnotationsOfType(EnumSet.of(AnnotationType.HIGHLIGHT, AnnotationType.UNDERLINE));
+
+        // This will asynchronously read all annotations, cast them and return them as a List.
+        annotationObservable
+                .cast(TextMarkupAnnotation.class)
+                .toList() // Collect all annotations into a List.
+                .observeOn(AndroidSchedulers.mainThread()) // Receive all annotations on the main thread.
+                .subscribe(new Consumer<List<TextMarkupAnnotation>>() {
+                    @Override
+                    public void accept(List<TextMarkupAnnotation> noteAnnotations) {
+                        // This is called on the main thread.
+                        broadcastAnnotationChanges(noteAnnotations);
+                    }
+                });
+    }
+
+    private void broadcastAnnotationChanges(List<TextMarkupAnnotation> annotations) {
+        Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
+        intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotationsToPDFAnnotation(annotations));
+        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         boolean handled = false;
 
-        if (item.getItemId() == R.id.bookmark_item) {
+        if (item.getItemId() == org.nypl.simplifiedpspdfkit.R.id.bookmark_item) {
             handled = true;
             toggleBookmark(getPageIndex());
-            if (onBookmarksChangedListener != null) {
-                onBookmarksChangedListener.onEvent(bookmarksToIntArray(bookmarkProvider.getBookmarks()));
-            }
         }
 
         return handled || super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void finish() {
+        Intent returnIntent = new Intent();
+        int pageRead = getPageIndex();
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
+        returnIntent.putExtra(PDFConstants.Companion.getPDF_PAGE_READ_EXTRA(), pageRead);
+        setResult(RESULT_OK, returnIntent);
+        super.finish();
+    }
+
+    private ArrayList<PDFAnnotation> annotationsToPDFAnnotation(List<TextMarkupAnnotation> annotations) {
+        ArrayList<PDFAnnotation> convertedAnnotations = new ArrayList<>();
+        for (TextMarkupAnnotation annotation : annotations) {
+            RectF boundingBox = annotation.getBoundingBox();
+            Log.w(TAG, boundingBox.toString());
+            Log.w(TAG, boundingBox.toShortString());
+            List<RectF> rects = annotation.getRects();
+
+            ArrayList<String> convertedRects = new ArrayList<>(rects.size());
+            for (RectF rect : rects) {
+                convertedRects.add(GSON.toJson(rect));
+            }
+
+            convertedAnnotations.add(
+                    new PDFAnnotation(
+                            annotation.getPageIndex(),
+                            annotation.getType().toString(),
+                            GSON.toJson(boundingBox),
+                            convertedRects,
+                            String.valueOf(annotation.getColor()),
+                            String.valueOf(annotation.getAlpha())
+                    )
+            );
+        }
+
+        return convertedAnnotations;
+    }
+
+    private ArrayList<PDFBookmark> bookmarksToPDFBookmark(List<Bookmark> bookmarks) {
+        ArrayList<PDFBookmark> convertedBookmarks = new ArrayList<>();
+        for (Bookmark bookmark : bookmarks) {
+            convertedBookmarks.add(new PDFBookmark(bookmark.getPageIndex()));
+        }
+
+        return convertedBookmarks;
+    }
+
 
     private boolean containsBookmarkForPage(List<Bookmark> bookmarks, int page) {
         for (Bookmark bookmark : bookmarks) {
@@ -150,6 +267,41 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         return null;
     }
 
+    private List<Annotation> pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
+        List<Annotation> ret = new ArrayList<>();
+
+        for (PDFAnnotation annotation : annotationsExtra) {
+            List<RectF> convertedRects = new ArrayList<>();
+            for (String rectJson : annotation.getRects()) {
+                RectF convertedRect = GSON.fromJson(rectJson, RectF.class);
+                convertedRects.add(convertedRect);
+            }
+
+            switch (annotation.getAnnotationType()) {
+                case "HIGHLIGHT":
+                    ret.add(new HighlightAnnotation(annotation.getPageNumber(), convertedRects));
+                    break;
+                case "UNDERLINE":
+                    ret.add(new UnderlineAnnotation(annotation.getPageNumber(), convertedRects));
+                default:
+                    break;
+            }
+        }
+
+        return ret;
+    }
+
+    private int[] pdfBookmarkToIntArray(ArrayList<PDFBookmark> bookmarksExtra) {
+        int[] ret = new int[bookmarksExtra.size()];
+        int i = 0;
+        for (PDFBookmark bookmark : bookmarksExtra) {
+            ret[i] = bookmark.getPageNumber();
+            i++;
+        }
+
+        return ret;
+    }
+
     private void setBookmarkIcon(int pageIndex) {
         // If this hasn't been initialized we don't want to trigger this.
         if (menu == null) {
@@ -157,11 +309,11 @@ public final class SimplifiedPDFActivity extends PdfActivity {
         }
 
         List<Bookmark> currentBookmarks = this.bookmarkProvider.getBookmarks();
-        MenuItem menuItem = menu.findItem(R.id.bookmark_item);
+        MenuItem menuItem = menu.findItem(org.nypl.simplifiedpspdfkit.R.id.bookmark_item);
         if (containsBookmarkForPage(currentBookmarks, pageIndex)) {
-            menuItem.setIcon(R.drawable.ic_bookmark);
+            menuItem.setIcon(org.nypl.simplifiedpspdfkit.R.drawable.ic_bookmark);
         } else {
-            menuItem.setIcon(R.drawable.ic_bookmark_outline);
+            menuItem.setIcon(org.nypl.simplifiedpspdfkit.R.drawable.ic_bookmark_outline);
         }
     }
 
@@ -180,17 +332,7 @@ public final class SimplifiedPDFActivity extends PdfActivity {
             }
         }
 
+        sendBookmarksChangedMessage();
         setBookmarkIcon(bookmarkPage);
-    }
-
-    private int[] bookmarksToIntArray(List<Bookmark> bookmarks){
-        // https://stackoverflow.com/a/965289/2107568
-        int[] bookmarkArray = new int[bookmarks.size()];
-        int i = 0;
-        for (Bookmark bookmark : bookmarks){
-            bookmarkArray[i++] = bookmark.getPageIndex();
-        }
-
-        return bookmarkArray;
     }
 }

@@ -5,5 +5,5 @@ package org.nypl.simplifiedpspdfkit
  */
 
 interface OnBookmarksChangedListener {
-    fun onEvent(newBookmarks: IntArray)
+    fun onBookmarkEvent(newBookmarks: IntArray)
 }

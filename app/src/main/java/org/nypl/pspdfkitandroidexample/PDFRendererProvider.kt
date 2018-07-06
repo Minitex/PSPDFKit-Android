@@ -3,20 +3,20 @@ package org.nypl.pspdfkitandroidexample
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.pspdfkit.bookmarks.Bookmark
+import org.nypl.pdfrendererprovider.PDFBookmark
 import org.nypl.simplifiedpspdfkit.OnBookmarksChangedListener
 import org.nypl.simplifiedpspdfkit.OnPageChangedListener
-import org.nypl.simplifiedpspdfkit.PSPDFKitRenderer
-import org.nypl.simplifiedpspdfkit.RendererProviderInterface
+import org.nypl.pdfrendererprovider.PDFRendererProviderInterface
+import org.nypl.simplifiedpspdfkit.SimplifiedPDFActivity
 
 class PDFRendererProvider {
-    lateinit var renderer : RendererProviderInterface
+    lateinit var renderer : PDFRendererProviderInterface
 
-    fun buildIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, pspdfKitLicenseKey: String, context: Context, pageChangedListener: OnPageChangedListener, bookmarksChangedListener: OnBookmarksChangedListener): Intent? {
-        renderer = PSPDFKitRenderer()
-        var bookmarksArray = pdfBookmarkSetToIntArray(bookmarks)
-        return renderer.buildIntent(assetFile, lastRead, bookmarksArray, pspdfKitLicenseKey, context, pageChangedListener, bookmarksChangedListener)
-    }
+//    fun buildPDFRendererIntent(assetFile: Uri, lastRead: Int, bookmarks: Set<PDFBookmark>, pspdfKitLicenseKey: String, context: Context, pageChangedListener: OnPageChangedListener, bookmarksChangedListener: OnBookmarksChangedListener): Intent? {
+//        renderer = SimplifiedPDFActivity()
+//        var bookmarksArray = pdfBookmarkSetToIntArray(bookmarks)
+//        return renderer.buildPDFRendererIntent(assetFile, lastRead, bookmarksArray, pspdfKitLicenseKey, context, pageChangedListener, bookmarksChangedListener)
+//    }
 
     fun pdfBookmarkSetToIntArray(bookmarks: Set<PDFBookmark>): IntArray {
         var bookmarkList = mutableListOf<Int>()
