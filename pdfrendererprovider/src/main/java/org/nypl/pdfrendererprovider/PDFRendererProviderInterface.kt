@@ -50,28 +50,8 @@ data class PDFBookmark(val pageNumber: Int) : Parcelable
 data class PDFAnnotation(
         val pageNumber: Int,
         val annotationType: String,
-        val boundingRect: FloatRect,
-        val rects: ArrayList<FloatRect>,
+        val boundingRect: String,
+        val rects: ArrayList<String>,
         val color: String?,
         val opacity: String?
 ) : Parcelable
-
-@Parcelize
-class FloatRect constructor(
-        var bottom: Float,
-        var left: Float,
-        var right: Float,
-        var top: Float
-) : Parcelable {
-    constructor(string: String) : this(0f, 0f, 0f, 0f) {
-        val splitString = string.split(',')
-        bottom = splitString[0].toFloat()
-        left = splitString[1].toFloat()
-        right = splitString[2].toFloat()
-        top = splitString[3].toFloat()
-    }
-
-    fun toFloatString(): String {
-        return bottom.toString() + "," + left + "," + right + "," + top
-    }
-}

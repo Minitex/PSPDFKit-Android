@@ -9,17 +9,19 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.gson.Gson;
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
 import com.pspdfkit.annotations.AnnotationType;
+import com.pspdfkit.annotations.HighlightAnnotation;
 import com.pspdfkit.annotations.TextMarkupAnnotation;
+import com.pspdfkit.annotations.UnderlineAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
 
-import org.nypl.pdfrendererprovider.FloatRect;
 import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
@@ -43,9 +45,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     }
 
     private static final String TAG = SimplifiedPDFActivity.class.getName();
+    private static final Gson GSON = new Gson();
 
     private static int[] bookmarksToCreate;
-    private static int[] annotationsToCreate;
+    private static List<Annotation> annotationsToCreate;
     private static int documentId;
     private Menu menu;
     private BookmarkProvider bookmarkProvider;
@@ -126,8 +129,10 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             }
         });
 
-        if (annotationsToCreate != null && annotationsToCreate.length > 0) {
-            // this.annotationProvider.addAnnotationToPage(new AssetAnnotation());
+        if (annotationsToCreate != null && annotationsToCreate.size() > 0) {
+            for (Annotation annotation : annotationsToCreate) {
+                this.annotationProvider.addAnnotationToPage(annotation);
+            }
         }
     }
 
@@ -212,16 +217,16 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
             Log.w(TAG, boundingBox.toShortString());
             List<RectF> rects = annotation.getRects();
 
-            ArrayList<FloatRect> convertedRects = new ArrayList<>(rects.size());
+            ArrayList<String> convertedRects = new ArrayList<>(rects.size());
             for (RectF rect : rects) {
-                convertedRects.add(new FloatRect(rect.bottom, rect.left, rect.right, rect.top));
+                convertedRects.add(GSON.toJson(rect));
             }
 
             convertedAnnotations.add(
                     new PDFAnnotation(
                             annotation.getPageIndex(),
                             annotation.getType().toString(),
-                            new FloatRect(boundingBox.bottom, boundingBox.left, boundingBox.right, boundingBox.top),
+                            GSON.toJson(boundingBox),
                             convertedRects,
                             String.valueOf(annotation.getColor()),
                             String.valueOf(annotation.getAlpha())
@@ -262,12 +267,25 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
         return null;
     }
 
-    private int[] pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
-        int[] ret = new int[annotationsExtra.size()];
-        int i = 0;
+    private List<Annotation> pdfAnnotationToPSPDFAnnotation(ArrayList<PDFAnnotation> annotationsExtra) {
+        List<Annotation> ret = new ArrayList<>();
+
         for (PDFAnnotation annotation : annotationsExtra) {
-            ret[i] = annotation.getPageNumber();
-            i++;
+            List<RectF> convertedRects = new ArrayList<>();
+            for (String rectJson : annotation.getRects()) {
+                RectF convertedRect = GSON.fromJson(rectJson, RectF.class);
+                convertedRects.add(convertedRect);
+            }
+
+            switch (annotation.getAnnotationType()) {
+                case "HIGHLIGHT":
+                    ret.add(new HighlightAnnotation(annotation.getPageNumber(), convertedRects));
+                    break;
+                case "UNDERLINE":
+                    ret.add(new UnderlineAnnotation(annotation.getPageNumber(), convertedRects));
+                default:
+                    break;
+            }
         }
 
         return ret;
