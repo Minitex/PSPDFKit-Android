@@ -3,9 +3,7 @@ package org.nypl.simplifiedpspdfkit;
 import android.content.Intent;
 import android.graphics.RectF;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
@@ -14,7 +12,6 @@ import android.view.MenuItem;
 import com.pspdfkit.annotations.Annotation;
 import com.pspdfkit.annotations.AnnotationProvider;
 import com.pspdfkit.annotations.AnnotationType;
-import com.pspdfkit.annotations.AssetAnnotation;
 import com.pspdfkit.annotations.TextMarkupAnnotation;
 import com.pspdfkit.bookmarks.Bookmark;
 import com.pspdfkit.bookmarks.BookmarkProvider;
@@ -28,13 +25,9 @@ import org.nypl.pdfrendererprovider.PDFBookmark;
 import org.nypl.pdfrendererprovider.PDFConstants;
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -176,17 +169,12 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                     @Override
                     public void accept(List<TextMarkupAnnotation> noteAnnotations) {
                         // This is called on the main thread.
-                        doSomething(noteAnnotations);
+                        broadcastAnnotationChanges(noteAnnotations);
                     }
                 });
-
-//        Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
-//        intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotations);
-//        intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
-//        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    private void doSomething(List<TextMarkupAnnotation> annotations) {
+    private void broadcastAnnotationChanges(List<TextMarkupAnnotation> annotations) {
         Intent intent = new Intent(PDFBroadcaster.Companion.getANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME());
         intent.putExtra(PDFConstants.Companion.getPDF_ANNOTATIONS_EXTRA(), annotationsToPDFAnnotation(annotations));
         intent.putExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), this.documentId);
