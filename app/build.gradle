@@ -23,6 +23,10 @@ android {
     }
 }
 
+androidExtensions {
+    experimental = true
+}
+
 repositories {
     jcenter()
     // add your additional maven repos here.
