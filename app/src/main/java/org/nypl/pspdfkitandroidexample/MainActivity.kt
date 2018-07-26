@@ -19,6 +19,10 @@ import org.nypl.pdfrendererprovider.PDFConstants
 import org.nypl.pdfrendererprovider.broadcaster.PDFBroadcaster
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        val TAG = MainActivity::class.qualifiedName
+        val BOOKS_BUNDLE_KEY = "booksListBundle"
+    }
 
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var adapter: BookListAdapter
@@ -32,7 +36,13 @@ class MainActivity : AppCompatActivity() {
         layoutManager = LinearLayoutManager(this)
         rv_book_list.layoutManager = layoutManager
 
-        populateBooks()
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(BOOKS_BUNDLE_KEY)) {
+                booksList = savedInstanceState.getParcelableArrayList(BOOKS_BUNDLE_KEY)
+            }
+        } else {
+            populateBooks()
+        }
 
         adapter = BookListAdapter(booksList)
         rv_book_list.adapter = adapter
@@ -42,6 +52,11 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(bookmarksChangedMessageReceiver, IntentFilter(PDFBroadcaster.BOOKMARKS_CHANGED_BROADCAST_EVENT_NAME))
             registerReceiver(annotationsChangedMessageReceiver, IntentFilter(PDFBroadcaster.ANNOTATIONS_CHANGED_BROADCAST_EVENT_NAME))
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelableArrayList(BOOKS_BUNDLE_KEY, booksList)
     }
 
     // https://stackoverflow.com/a/45399437
