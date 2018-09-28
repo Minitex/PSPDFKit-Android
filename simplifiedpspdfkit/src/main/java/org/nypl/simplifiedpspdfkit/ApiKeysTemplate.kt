@@ -9,4 +9,3 @@ class ApiKeysTemplate {
         const val PSPDFKitLicenseKey = ""
     }
 }
-}
