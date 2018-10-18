@@ -8,6 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.google.gson.Gson;
 import com.pspdfkit.annotations.Annotation;
@@ -21,6 +22,11 @@ import com.pspdfkit.bookmarks.BookmarkProvider;
 import com.pspdfkit.document.PdfDocument;
 import com.pspdfkit.listeners.DocumentListener;
 import com.pspdfkit.ui.PdfActivity;
+import com.pspdfkit.ui.toolbar.AnnotationCreationToolbar;
+import com.pspdfkit.ui.toolbar.AnnotationEditingToolbar;
+import com.pspdfkit.ui.toolbar.ContextualToolbar;
+import com.pspdfkit.ui.toolbar.ContextualToolbarMenuItem;
+import com.pspdfkit.ui.toolbar.ToolbarCoordinatorLayout;
 
 import org.nypl.pdfrendererprovider.PDFAnnotation;
 import org.nypl.pdfrendererprovider.PDFBookmark;
@@ -39,7 +45,9 @@ import io.reactivex.functions.Consumer;
  * Created by Matt on 3/2/2018.
  */
 
-public class SimplifiedPDFActivity extends PdfActivity implements DocumentListener {
+public class SimplifiedPDFActivity
+        extends PdfActivity
+        implements DocumentListener, ToolbarCoordinatorLayout.OnContextualToolbarLifecycleListener {
 
     public SimplifiedPDFActivity() {
     }
@@ -65,6 +73,7 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setOnContextualToolbarLifecycleListener(this);
         Intent intent = getIntent();
         if (intent != null) {
             int documentId = intent.getIntExtra(PDFConstants.Companion.getPDF_ID_EXTRA(), -1);
@@ -82,6 +91,34 @@ public class SimplifiedPDFActivity extends PdfActivity implements DocumentListen
                 annotationsToCreate = pdfAnnotationToPSPDFAnnotation(annotationsExtra);
             }
         }
+    }
+
+    @Override
+    public void onPrepareContextualToolbar(@NonNull ContextualToolbar contextualToolbar) {
+        if (contextualToolbar instanceof AnnotationCreationToolbar) {
+            contextualToolbar.setDraggable(false);
+            contextualToolbar.setUseBackButtonForCloseWhenHorizontal(true);
+            contextualToolbar.setMenuItemGroupingRule(new CustomAnnotationCreationToolbarGroupingRule(this));
+
+            // Get the existing menu items
+            final List<ContextualToolbarMenuItem> menuItems = ((AnnotationCreationToolbar) contextualToolbar).getMenuItems();
+
+            contextualToolbar.setMenuItems(menuItems);
+
+        } else if (contextualToolbar instanceof AnnotationEditingToolbar) {
+            // This shows how to hide annotation note button for all annotations.
+            contextualToolbar.setMenuItemVisibility(R.id.pspdf__annotation_creation_toolbar_item_note, View.GONE);
+        }
+    }
+
+    @Override
+    public void onDisplayContextualToolbar(@NonNull ContextualToolbar toolbar) {
+
+    }
+
+    @Override
+    public void onRemoveContextualToolbar(@NonNull ContextualToolbar toolbar) {
+
     }
 
     @Override
