@@ -52,7 +52,7 @@ dependencies {
 
     //compile 'com.pspdfkit:pspdfkit:4.2.0'
     // when we have a real maven key, we'll need to compile the above instead of demo (I'm guessing)
-    compile 'com.pspdfkit:pspdfkit-demo:4.5.1'
+    compile 'com.pspdfkit:pspdfkit-demo:4.8.1'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation 'com.google.code.gson:gson:2.8.5'
